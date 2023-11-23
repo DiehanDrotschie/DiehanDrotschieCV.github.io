@@ -1,67 +1,129 @@
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
+/* Reset default styles */
+* {
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
-    color: #333;
+    box-sizing: border-box;
 }
 
-header {
-    background: #535252;
-    color: #fff;
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 50px; /* Adjust this value as needed */
+}
+.content {
+    display: flex;
+    flex: 1;
+}
+
+
+/* Sidebar styles */
+.sidebar {
+    background-color: #333;
+    color: white;
+    width: 200px; /* Adjust the width as needed */
+    position: fixed;
+    top: 50px; /* Start the sidebar 50px from the top */
+    bottom: 50%; /* Sidebar height is 50% of the viewport height */
+    overflow-y: auto;
+}
+
+.menu ul {
+    list-style-type: none;
+    padding: 20px;
+}
+
+.menu ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px 0;
+}
+
+.social-media {
     padding: 20px;
     text-align: center;
 }
 
-header h1 {
-    margin: 0;
+.social-media a {
+    color: white;
+    padding: 0 10px;
+    display: inline-block;
+    margin: 0 5px;
+    text-decoration: none;
+    font-size: 24px; /* Adjust size as needed */
+}
+
+.social-media a i {
+    color: white;
+    font-size: 24px; /* FontAwesome icon size */
+}
+
+/* Main content styles */
+main {
+    flex: 1;
+    margin-left: 200px; /* Same as the width of the sidebar */
 }
 
 section {
     padding: 20px;
-    margin: 15px;
 }
 
-h2 {
-    color: #333;
+#intro {
+    background-color: #65858d; /* Darker orange background */
+    color: white;
+    padding: 40px 20px;
 }
 
-h3 {
-    color: #333333;
-    margin-bottom: 10px;
-    font-size: 1.2em;
+.intro-content {
+    max-width: 800px;
+    margin: auto;
 }
 
-ul {
-    list-style: none;
-    padding: 1;
+.intro-buttons button {
+    background-color: #e7e7e7; /* Light grey background */
+    border: none;
+    padding: 10px 20px;
+    margin-right: 10px;
+    cursor: pointer;
 }
 
-ul li {
-    background: #fff;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid #ddd;
+#about {
+    background-color: #ffd9b3; /* Lighter orange background */
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-}
+/* Add styles for additional sections as needed */
 
-table th, table td {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
+/* Responsive styles */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
 
-table th {
-    background-color: #f4f4f4;
-    color: #333;
-}
+    .sidebar {
+        position: static; /* Resets the position for mobile devices */
+        height: auto;
+    }
 
-table tr:nth-child(even) {
-    background-color: #f9f9f9;
+    .menu, .social-media {
+        text-align: center;
+    }
+
+    .menu ul {
+        display: flex;
+        justify-content: center;
+    }
+
+    .menu ul li {
+        padding: 0 10px;
+    }
+
+    .intro-content, .intro-buttons {
+        text-align: center;
+    }
+
+    .intro-buttons button {
+        margin: 10px 0;
+    }
 }
