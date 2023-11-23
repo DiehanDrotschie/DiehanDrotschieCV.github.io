@@ -8,7 +8,7 @@ body {
 }
 
 header {
-    background: #333;
+    background: #535252;
     color: #fff;
     padding: 20px;
     text-align: center;
@@ -27,9 +27,15 @@ h2 {
     color: #333;
 }
 
+h3 {
+    color: #333333;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
 ul {
     list-style: none;
-    padding: 0;
+    padding: 1;
 }
 
 ul li {
@@ -37,4 +43,25 @@ ul li {
     margin-bottom: 10px;
     padding: 10px;
     border: 1px solid #ddd;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+table th, table td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+table th {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
 }
