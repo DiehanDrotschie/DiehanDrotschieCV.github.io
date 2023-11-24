@@ -73,6 +73,7 @@ section {
     width: 95%;
 }
 
+/* list for about me section */
 #about {
     margin-top: 20px;
     border-radius: 10px; 
@@ -92,12 +93,109 @@ section {
     margin-bottom: 10px;
     padding: 10px;
     border: 2px solid #65858d;
+}
 
+
+/* list for academic achievements*/
+#academic {
+    margin-top: 20px;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 95%;
+    height: 410px;
+}
+
+#academic ul {
+    margin-top: 15px;
+    list-style: none;
+    padding: 1;
+}
+
+#academic ul li {
+    background: #bdd9e0;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 2px solid #65858d;
+}
+
+/* list for Cutural achievements achievements*/
+#culture {
+    margin-top: 20px;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 95%;
+    height: 125px;
 
 }
 
-/* Add styles for additional sections as needed */
+#culture ul {
+    margin-top: 15px;
+    list-style: none;
+    padding: 1;
+}
 
+#culture ul li {
+    background: #bdd9e0;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 2px solid #65858d;
+}
+
+/* list for Sport achievements achievements*/
+#sport {
+    margin-top: 20px;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 95%;
+    height: 225px;
+}
+
+#sport ul {
+    margin-top: 15px;
+    list-style: none;
+    padding: 1;
+}
+
+#sport ul li {
+    background: #bdd9e0;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 2px solid #65858d;
+}
+
+/* Section for Uni marks */
+#marks {
+    margin-top: 20px;
+    margin-bottom: 35px;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 95%;
+    height: 430px;
+}
+
+/*style for table */
+#marks table {
+    width : 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    border-radius: 10 px;
+}
+
+#marks table th, table td {
+    border: 2px solid #65858d;
+    text-align: left;
+    padding: 8px;
+
+}
+
+#marks table th {
+    color: #333
+}
+
+#marks table tr:nth-child(even) {
+    background-color: #bdd9e0;
+
+}
 /* Responsive styles */
 @media (max-width: 768px) {
     body {
