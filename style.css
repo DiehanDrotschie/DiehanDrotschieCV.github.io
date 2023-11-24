@@ -14,6 +14,25 @@ body {
     background-color: #d4e9ee;
 }
 
+/* headin styles*/
+h1 {
+    text-align:center;
+    font-size:50px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-family:"Playfair Display", serif;
+    font-weight:400;
+    color: rgb(0, 0, 0);
+}
+
+h2 {
+    font-size:32px;
+    letter-spacing:1px;
+    font-family:"Playfair Display", serif;
+    font-weight:550;
+    color: rgb(0, 0, 0);
+
+}
 
 /* Sidebar styles */
 .sidebar {
@@ -65,7 +84,7 @@ section {
 }
 
 #intro {
-    background-color: #65858d; /* Darker orange background */
+    background-color: #83a2aa; /* Darker orange background */
     color: white;
     padding: 40px 20px;
     border-radius: 10px; 
@@ -79,7 +98,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 330px;
+    height: 350px;
 }
 
 #about ul {
@@ -102,7 +121,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 410px;
+    height: 420px;
 }
 
 #academic ul {
@@ -124,7 +143,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 125px;
+    height: 140px;
 
 }
 
@@ -147,7 +166,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 225px;
+    height: 250px;
 }
 
 #sport ul {
@@ -170,7 +189,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 430px;
+    height: 450px;
 }
 
 /*style for table */
