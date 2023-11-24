@@ -92,6 +92,17 @@ section {
     width: 95%;
 }
 
+/* Style buttons */
+#intro .btn {
+    margin-top: 100 px;
+    background-color: #83a2aa;
+    border: none;
+    color: black;
+    padding: 12px 30px;
+    cursor: pointer;
+    font-size: 20px;
+}
+
 /* list for about me section */
 #about {
     margin-top: 20px;
