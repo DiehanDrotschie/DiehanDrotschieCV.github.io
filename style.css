@@ -203,6 +203,33 @@ section {
     height: 450px;
 }
 
+/* Section for Tic tac Toe game */
+#tictactoe {
+    margin-top: 20px;
+    margin-bottom: 35px;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 95%;
+    height: 200px;
+}
+/* Section for impasse game */
+#impasse {
+    margin-top: 20px;
+    margin-bottom: 35px;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 95%;
+    height: 200px;
+}
+/* Section for moving maze game */
+#moving_maze {
+    margin-top: 20px;
+    margin-bottom: 35px;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 95%;
+    height: 200px;
+}
 /*style for table */
 #marks table {
     width : 100%;
