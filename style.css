@@ -253,6 +253,18 @@ section {
     background-color: #bdd9e0;
 
 }
+
+/*Properties for pfp image*/
+
+#pfpimage {
+    float: right;
+    position: relative;
+    top: -136px; 
+    width: 127px;      
+    height: auto;       
+    border: 2px solid black; 
+
+}
 /* Responsive styles */
 @media (max-width: 768px) {
     body {
