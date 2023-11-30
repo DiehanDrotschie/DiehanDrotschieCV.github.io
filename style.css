@@ -265,6 +265,11 @@ section {
     border: 2px solid black; 
 
 }
+
+#tictactoeimg {
+
+    
+}
 /* Responsive styles */
 @media (max-width: 768px) {
     body {
