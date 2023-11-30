@@ -34,6 +34,17 @@ h2 {
 
 }
 
+h3 {
+    margin-top: 12px;
+    margin-bottom: -15px;
+    font-size:20px;
+    letter-spacing:1px;
+    font-family:"Playfair Display", serif;
+    font-weight:550;
+    color: rgb(0, 0, 0);
+
+}
+
 /* Sidebar styles */
 .sidebar {
     background-color: #333;
@@ -200,7 +211,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 450px;
+    height: 890px;
 }
 
 /* Section for Tic tac Toe game */
@@ -210,7 +221,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 200px;
+    height: 515px;
 }
 /* Section for impasse game */
 #impasse {
@@ -232,10 +243,11 @@ section {
 }
 /*style for table */
 #marks table {
+    table-layout: fixed;
     width : 100%;
     border-collapse: collapse;
     margin: 20px 0;
-    border-radius: 10 px;
+    border-radius: 10px;
 }
 
 #marks table th, table td {
@@ -267,8 +279,13 @@ section {
 }
 
 #tictactoeimg {
+    position: relative;
+    top: 20px ;
+    right: -341px;
+    width: 415px;
+    height: auto;
+    border: 2px solid black;
 
-    
 }
 /* Responsive styles */
 @media (max-width: 768px) {
