@@ -54,9 +54,12 @@ h3 {
     overflow-y: auto;
     border-radius: 10px; 
     border: 2px solid #000000;
-    height: 35%;
+    height: 45%;
 }
 
+.menu {
+    margin-top: 25px;
+}
 .menu ul {
     list-style-type: none;
     padding: 20px;
@@ -70,6 +73,7 @@ h3 {
 }
 
 .social-media {
+    margin-top: 50px;
     padding: 20px;
     text-align: center;
 }
@@ -239,7 +243,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 540px;
+    height: 565px;
 }
 
 /*Section for compression and decompression software*/
@@ -258,7 +262,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 540px;
+    height: 450px;
 }
 
 /*style for table */
@@ -326,12 +330,39 @@ section {
 }
 
 #mvz {
-      position: relative;
+    position: relative;
     top: 20px ;
     right: -341px;
     width: 415px;
     height: auto;
     border: 2px solid black;  
+}
+
+#decsoftimg{
+    position: relative;
+    top: 20px ;
+    right: -341px;
+    width: 415px;
+    height: auto;
+    border: 2px solid black;  
+}
+
+#wed1im{
+    position: relative;
+    top: 20px ;
+    right: -80px;
+    width: 415px;
+    height: auto;
+    border: 2px solid black;
+}
+
+#wed2im{
+    position: relative;
+    top: 20px ;
+    right: -150px;
+    width: 415px;
+    height: auto;
+    border: 2px solid black; 
 }
 /* Responsive styles */
 @media (max-width: 768px) {
