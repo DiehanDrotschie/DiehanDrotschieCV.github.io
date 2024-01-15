@@ -230,7 +230,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 200px;
+    height: 545px;
 }
 /* Section for moving maze game */
 #moving_maze {
@@ -239,7 +239,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 200px;
+    height: 540px;
 }
 
 /*Section for compression and decompression software*/
@@ -249,7 +249,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 200px;
+    height: 540px;
 }
 
 /*Section for website for wedding table allocation*/
@@ -258,7 +258,7 @@ section {
     border-radius: 10px; 
     border: 2px solid #000000;  
     width: 95%;
-    height: 200px;
+    height: 540px;
 }
 
 /*style for table */
@@ -297,6 +297,24 @@ section {
     border: 2px solid black; 
 }
 
+#imp1 {
+    position: relative;
+    top: 20px ;
+    right: -80px;
+    width: 415px;
+    height: auto;
+    border: 2px solid black;
+}
+
+#imp2 {
+    position: relative;
+    top: 20px ;
+    right: -150px;
+    width: 415px;
+    height: auto;
+    border: 2px solid black; 
+}
+
 #tictactoeimg {
     position: relative;
     top: 20px ;
@@ -305,6 +323,15 @@ section {
     height: auto;
     border: 2px solid black;
 
+}
+
+#mvz {
+      position: relative;
+    top: 20px ;
+    right: -341px;
+    width: 415px;
+    height: auto;
+    border: 2px solid black;  
 }
 /* Responsive styles */
 @media (max-width: 768px) {
