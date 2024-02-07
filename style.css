@@ -243,15 +243,7 @@ section {
     border: 2px solid #65858d;
 }
 
-/*Section for instagram clone app*/
-#insta_clone{
-    margin-top: 25px;
-    margin-bottom: 35px;
-    border-radius: 10px;
-    border: 2px solid black;
-    width: 95%;
-    height: 500px;
-}
+
 
 
 /* Section for Tic tac Toe game */
@@ -400,6 +392,54 @@ section {
     height: auto;
     border: 2px solid black; 
 }
+
+
+/*Section for instagram clone app*/
+#insta_clone{
+    margin-top: 25px;
+    margin-bottom: 35px;
+    border-radius: 10px;
+    border: 2px solid black;
+    width: 95%;
+    height: 610px;
+}
+
+/*style for app scroll images*/
+.image-scroll-container {
+    display: flex; /* Aligns images in a row */
+    margin: 0 auto;
+    overflow-x: auto; /* Enables horizontal scrolling */
+    white-space: nowrap; /* Prevents wrapping to a new line */
+    gap: 10px; /* Optional: adds some space between images */
+    scrollbar-width: thin; /* Optional: makes the scrollbar thinner */
+    scrollbar-color: blue #65858d; 
+    width: 500px;
+}
+
+.image-scroll-container img {
+    flex: 0 0 auto; /* Prevents images from stretching */
+    height: 450px; /* Adjust based on your preference */
+    width: 200px;
+    /* width: auto; /* Uncomment if you want to maintain the aspect ratio */
+}
+
+/* Styles for customizing the scrollbar for Webkit browsers like Chrome, Safari */
+.image-scroll-container::-webkit-scrollbar {
+    height: 12px; /* Height of the scrollbar */
+}
+
+.image-scroll-container::-webkit-scrollbar-track {
+    border-radius: 10px;
+    background: #65858d; /* Color of the track */
+}
+
+.image-scroll-container::-webkit-scrollbar-thumb {
+    background-color: blue; /* Color of the scrollbar thumb */
+    border-radius: 10px; /* Roundness of the scrollbar thumb */
+}
+
+
+
 /* Responsive styles */
 @media (max-width: 768px) {
     body {
