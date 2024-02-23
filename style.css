@@ -10,14 +10,14 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding-top: 50px; /* Adjust this value as needed */
+    padding-top: 5vh; /* Adjust this value as needed */
     background-color: #d4e9ee;
 }
 
 /* headin styles*/
 h1 {
     text-align:center;
-    font-size:50px;
+    font-size: 7.1vh;
     text-transform:uppercase;
     letter-spacing:1px;
     font-family:"Playfair Display", serif;
@@ -26,7 +26,7 @@ h1 {
 }
 
 h2 {
-    font-size:32px;
+    font-size:5vh;
     letter-spacing:1px;
     font-family:"Playfair Display", serif;
     font-weight:550;
@@ -35,9 +35,9 @@ h2 {
 }
 
 h3 {
-    margin-top: 12px;
-    margin-bottom: -15px;
-    font-size:20px;
+    margin-top: 1vh;
+    margin-bottom: -1.1vh;
+    font-size:3.2vh;
     letter-spacing:1px;
     font-family:"Playfair Display", serif;
     font-weight:550;
@@ -49,248 +49,202 @@ h3 {
 .sidebar {
     background-color: #333;
     color: white;
-    width: 190px; /* Adjust the width as needed */
+    width: 14vw; /* Adjust the width as needed */
     position: fixed;
     overflow-y: auto;
-    border-radius: 10px; 
+    border-radius: 1vh; 
     border: 2px solid #000000;
-    height: 45%;
+    height: 48vh;
 }
 
 .menu {
-    margin-top: 25px;
+    margin-top: 2vh;
 }
 .menu ul {
     list-style-type: none;
-    padding: 20px;
+    padding: 2vh;
 }
 
 .menu ul li a {
     color: white;
     text-decoration: none;
     display: block;
-    padding: 10px 0;
+    padding: 2.2vh 0;
 }
 
 .social-media {
-    margin-top: 50px;
-    padding: 20px;
+    margin-top: 4vh;
+    padding: 3vh;
     text-align: center;
 }
 
 .social-media a {
     color: white;
-    padding: 0 10px;
+    padding: 0 1vh;
     display: inline-block;
     margin: 0 5px;
     text-decoration: none;
-    font-size: 24px; /* Adjust size as needed */
+    font-size: 4vh; /* Adjust size as needed */
 }
 
 
 /* Main content styles */
 main {
     flex: 1;
-    margin-left: 200px; /* Same as the width of the sidebar */
+    margin-left: 15vw; 
 }
 
 section {
-    padding: 20px;
+    padding: 2.5vh;
 }
 
 #intro {
-    background-color: #83a2aa; /* Darker orange background */
+    background-color: #83a2aa; 
     color: white;
-    padding: 40px 20px;
+    padding: 5.6vh 2vw;
     border-radius: 10px; 
     border: 2px solid #000000;
-    width: 95%;
+    width: 80vw;
 }
 
 /* Style buttons */
 #intro .btn {
-    margin-top: 100 px;
+    margin-top: 2vh;
     background-color: #83a2aa;
     border: none;
     color: black;
-    padding: 12px 30px;
+    padding: 1vh 2vw;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 3.2vh;
 }
 
 /* list for about me section */
 #about {
-    margin-top: 20px;
+    margin-top: 2vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 350px;
+    width: 80vw;
+    height: 52vh;
 }
-
-#about ul {
-    margin-top: 15px;
+/* all ul lists */
+#about ul, #academic ul, #culture ul, #sport ul, #programming_lang ul {
+    margin-top: 1.5vh;
     list-style: none;
     padding: 1;
 }
 
-#about ul li {
+#about ul li, #academic ul li, #culture ul li, #sport ul li, #programming_lang ul li {
     background: #bdd9e0;
-    margin-bottom: 10px;
-    padding: 10px;
+    margin-bottom: 1.5vh;
+    padding: 1.6vh;
     border: 2px solid #65858d;
 }
-
 
 /* list for academic achievements*/
 #academic {
-    margin-top: 20px;
+    margin-top: 2vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 520px;
-}
-
-#academic ul {
-    margin-top: 15px;
-    list-style: none;
-    padding: 1;
-}
-
-#academic ul li {
-    background: #bdd9e0;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 2px solid #65858d;
+    width: 80vw;
+    height: 78vh;
 }
 
 /* list for Cutural achievements achievements*/
 #culture {
-    margin-top: 20px;
+    margin-top: 2vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 140px;
+    width: 80vw;
+    height: 19vh;
 
-}
-
-#culture ul {
-    margin-top: 15px;
-    list-style: none;
-    padding: 1;
-}
-
-#culture ul li {
-    background: #bdd9e0;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 2px solid #65858d;
 }
 
 /* list for Sport achievements achievements*/
 #sport {
-    margin-top: 20px;
+    margin-top: 2vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 250px;
-}
-
-#sport ul {
-    margin-top: 15px;
-    list-style: none;
-    padding: 1;
-}
-
-#sport ul li {
-    background: #bdd9e0;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 2px solid #65858d;
+    width: 80vw;
+    height: 35vh;
 }
 
 /* Section for Uni marks */
 #marks {
-    margin-top: 20px;
-    margin-bottom: 35px;
+    margin-top: 2vh;
+    margin-bottom: 6vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 890px;
+    width: 80vw;
+    height: 122vh;
 }
 
 /*Section for programming languages*/
 
 #programming_lang{
-    margin-top: 25px;
-    margin-bottom: 35px;
+    margin-top: 2vh;
+    margin-bottom: 4vh;
     border-radius: 10px;
     border: 2px solid black;
-    width: 95%;
-    height: 500px;
+    width: 80vw;
+    height: 75vh;
 }
-
-#programming_lang ul {
-    margin-top: 10px;
-    list-style: none;
-    padding: 1;
-}
-
-#programming_lang ul li {
-    background: #bdd9e0;
-    margin-bottom: 10px;
-    border-radius: 10px;
-    padding: 10px;
-    border: 2px solid #65858d;
-}
-
-
-
 
 /* Section for Tic tac Toe game */
 #tictactoe {
-    margin-top: 20px;
-    margin-bottom: 35px;
+    margin-top: 2vh;
+    margin-bottom: 5vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 530px;
+    width: 80vw;
+    height: 77vh;
 }
 /* Section for impasse game */
 #impasse {
-    margin-top: 20px;
-    margin-bottom: 35px;
+    margin-top: 2vh;
+    margin-bottom: 5vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 545px;
+    width: 80vw;
+    height: 80vh;
 }
 /* Section for moving maze game */
 #moving_maze {
-    margin-top: 20px;
-    margin-bottom: 35px;
+    margin-top: 2vh;
+    margin-bottom: 5vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 565px;
+    width: 80vw;
+    height: 83vh;
 }
 
 /*Section for compression and decompression software*/
-
 #cmpsoft {
-    margin-bottom: 35px;
+    margin-top: 2vh;
+    margin-bottom: 5vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 540px;
+    width: 80vw;
+    height: 79vh;
 }
 
 /*Section for website for wedding table allocation*/
 #wedtable{
-    margin-bottom: 35px;
+    margin-top: 2vh;
+    margin-bottom: 5vh;
     border-radius: 10px; 
     border: 2px solid #000000;  
-    width: 95%;
-    height: 450px;
+    width: 80vw;
+    height: 63vh;
+}
+
+/*Section for instagram clone app*/
+#insta_clone{
+    margin-top: 2vh;
+    margin-bottom: 5vh;
+    border-radius: 10px;
+    border: 2px solid black;
+    width: 80vw;
+    height: 90vh;
 }
 
 /*style for table */
@@ -298,14 +252,14 @@ section {
     table-layout: fixed;
     width : 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin: 2vh 0;
     border-radius: 10px;
 }
 
 #marks table th, table td {
     border: 2px solid #65858d;
     text-align: left;
-    padding: 8px;
+    padding: 1vh;
 
 }
 
@@ -323,109 +277,97 @@ section {
 #pfpimage {
     float: right;
     position: relative;
-    top: -136px; 
-    width: 169px;      
-    height: auto;       
+    top: -19.8vh; 
+    width: 12vw;      
+    height: 33vh;       
     border: 2px solid black; 
 }
 
 #imp1 {
     position: relative;
-    top: 20px ;
-    right: -80px;
-    width: 415px;
-    height: auto;
+    top: 2.3vh ;
+    right: -6vw;
+    width: 27vw;
+    height: 59vh;
     border: 2px solid black;
 }
 
 #imp2 {
     position: relative;
-    top: 20px ;
-    right: -150px;
-    width: 415px;
-    height: auto;
+    top: 2.3vh ;
+    right: -11vw;
+    width: 28vw;
+    height: 59vh;
     border: 2px solid black; 
 }
 
 #tictactoeimg {
     position: relative;
-    top: 20px ;
-    right: -341px;
-    width: 415px;
-    height: auto;
+    top: 2.3vh ;
+    right: -24vw;
+    width: 29vw;
+    height: 60vh;
     border: 2px solid black;
 
 }
 
 #mvz {
     position: relative;
-    top: 20px ;
-    right: -341px;
-    width: 415px;
-    height: auto;
+    top: 2.3vh ;
+    right: -24vw;
+    width: 29vw;
+    height: 60vh;
     border: 2px solid black;  
 }
 
 #decsoftimg{
     position: relative;
-    top: 20px ;
-    right: -341px;
-    width: 415px;
-    height: auto;
+    top: 2.3vh ;
+    right: -24vw;
+    width: 29vw;
+    height: 60vh;
     border: 2px solid black;  
 }
 
 #wed1im{
     position: relative;
-    top: 20px ;
-    right: -80px;
-    width: 415px;
-    height: auto;
+    top: 2.3vh ;
+    right: -6vw;
+    width: 28vw;
+    height: 42vh;
     border: 2px solid black;
 }
 
 #wed2im{
     position: relative;
-    top: 20px ;
-    right: -150px;
-    width: 415px;
-    height: auto;
+    top: 2.3vh ;
+    right: -11vw;
+    width: 28vw;
+    height: 42vh;
     border: 2px solid black; 
-}
-
-
-/*Section for instagram clone app*/
-#insta_clone{
-    margin-top: 25px;
-    margin-bottom: 35px;
-    border-radius: 10px;
-    border: 2px solid black;
-    width: 95%;
-    height: 610px;
 }
 
 /*style for app scroll images*/
 .image-scroll-container {
-    display: flex; /* Aligns images in a row */
+    display: flex; 
     margin: 0 auto;
-    overflow-x: auto; /* Enables horizontal scrolling */
-    white-space: nowrap; /* Prevents wrapping to a new line */
-    gap: 10px; /* Optional: adds some space between images */
-    scrollbar-width: thin; /* Optional: makes the scrollbar thinner */
+    overflow-x: auto; 
+    white-space: nowrap; 
+    gap: 1.2vw; 
+    scrollbar-width: thin; 
     scrollbar-color: blue #65858d; 
-    width: 500px;
+    width: 54vw;
 }
 
 .image-scroll-container img {
-    flex: 0 0 auto; /* Prevents images from stretching */
-    height: 450px; /* Adjust based on your preference */
-    width: 200px;
-    /* width: auto; /* Uncomment if you want to maintain the aspect ratio */
+    flex: 0 0 auto; 
+    height: 65vh; 
+    width: 15.5vw;
 }
 
 /* Styles for customizing the scrollbar for Webkit browsers like Chrome, Safari */
 .image-scroll-container::-webkit-scrollbar {
-    height: 12px; /* Height of the scrollbar */
+    height: 1.9vh; 
 }
 
 .image-scroll-container::-webkit-scrollbar-track {
