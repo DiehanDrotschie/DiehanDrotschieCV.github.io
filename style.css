@@ -126,6 +126,25 @@ section {
     width: 80vw;
     height: 52vh;
 }
+
+/* list for summary section */
+#summary {
+    margin-top: 2vh;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 80vw;
+    height: 22vh;
+}
+
+/* list for experience section */
+#experience {
+    margin-top: 2vh;
+    border-radius: 10px; 
+    border: 2px solid #000000;  
+    width: 80vw;
+    height: 22vh;
+}
+
 /* all ul lists */
 #about ul, #academic ul, #culture ul, #sport ul, #programming_lang ul {
     margin-top: 1.5vh;
@@ -186,7 +205,7 @@ section {
     border-radius: 10px;
     border: 2px solid black;
     width: 80vw;
-    height: 75vh;
+    height: 82vh;
 }
 
 /* Section for Tic tac Toe game */
