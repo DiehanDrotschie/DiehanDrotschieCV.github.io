@@ -6,7 +6,7 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: "Arial", sans-serif;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -16,33 +16,31 @@ body {
 
 /* headin styles*/
 h1 {
-    text-align:center;
+    text-align: center;
     font-size: 7.1vh;
-    text-transform:uppercase;
-    letter-spacing:1px;
-    font-family:"Playfair Display", serif;
-    font-weight:400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: "Playfair Display", serif;
+    font-weight: 400;
     color: rgb(0, 0, 0);
 }
 
 h2 {
-    font-size:5vh;
-    letter-spacing:1px;
-    font-family:"Playfair Display", serif;
-    font-weight:550;
+    font-size: 5vh;
+    letter-spacing: 1px;
+    font-family: "Playfair Display", serif;
+    font-weight: 550;
     color: rgb(0, 0, 0);
-
 }
 
 h3 {
     margin-top: 1vh;
     margin-bottom: -1.1vh;
-    font-size:3.2vh;
-    letter-spacing:1px;
-    font-family:"Playfair Display", serif;
-    font-weight:550;
+    font-size: 3.2vh;
+    letter-spacing: 1px;
+    font-family: "Playfair Display", serif;
+    font-weight: 550;
     color: rgb(0, 0, 0);
-
 }
 
 /* Sidebar styles */
@@ -52,7 +50,7 @@ h3 {
     width: 14vw; /* Adjust the width as needed */
     position: fixed;
     overflow-y: auto;
-    border-radius: 1vh; 
+    border-radius: 1vh;
     border: 2px solid #000000;
     height: 48vh;
 }
@@ -87,11 +85,10 @@ h3 {
     font-size: 4vh; /* Adjust size as needed */
 }
 
-
 /* Main content styles */
 main {
     flex: 1;
-    margin-left: 15vw; 
+    margin-left: 15vw;
 }
 
 section {
@@ -99,10 +96,10 @@ section {
 }
 
 #intro {
-    background-color: #83a2aa; 
+    background-color: #83a2aa;
     color: white;
     padding: 5.6vh 2vw;
-    border-radius: 10px; 
+    border-radius: 10px;
     border: 2px solid #000000;
     width: 80vw;
 }
@@ -121,8 +118,8 @@ section {
 /* list for about me section */
 #about {
     margin-top: 2vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 52vh;
 }
@@ -130,8 +127,8 @@ section {
 /* list for summary section */
 #summary {
     margin-top: 2vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 22vh;
 }
@@ -139,20 +136,28 @@ section {
 /* list for experience section */
 #experience {
     margin-top: 2vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
-    height: 22vh;
+    height: 38vh;
 }
 
 /* all ul lists */
-#about ul, #academic ul, #culture ul, #sport ul, #programming_lang ul {
+#about ul,
+#academic ul,
+#culture ul,
+#sport ul,
+#programming_lang ul {
     margin-top: 1.5vh;
     list-style: none;
     padding: 1;
 }
 
-#about ul li, #academic ul li, #culture ul li, #sport ul li, #programming_lang ul li {
+#about ul li,
+#academic ul li,
+#culture ul li,
+#sport ul li,
+#programming_lang ul li {
     background: #bdd9e0;
     margin-bottom: 1.5vh;
     padding: 1.6vh;
@@ -162,8 +167,8 @@ section {
 /* list for academic achievements*/
 #academic {
     margin-top: 2vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 78vh;
 }
@@ -171,18 +176,17 @@ section {
 /* list for Cutural achievements achievements*/
 #culture {
     margin-top: 2vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 19vh;
-
 }
 
 /* list for Sport achievements achievements*/
 #sport {
     margin-top: 2vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 35vh;
 }
@@ -191,29 +195,29 @@ section {
 #marks {
     margin-top: 2vh;
     margin-bottom: 6vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
-    height: 122vh;
+    height: 175vh;
 }
 
 /*Section for programming languages*/
 
-#programming_lang{
+#programming_lang {
     margin-top: 2vh;
     margin-bottom: 4vh;
     border-radius: 10px;
     border: 2px solid black;
     width: 80vw;
-    height: 82vh;
+    height: 92vh;
 }
 
 /* Section for Tic tac Toe game */
 #tictactoe {
     margin-top: 2vh;
     margin-bottom: 5vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 77vh;
 }
@@ -221,8 +225,8 @@ section {
 #impasse {
     margin-top: 2vh;
     margin-bottom: 5vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 80vh;
 }
@@ -230,8 +234,8 @@ section {
 #moving_maze {
     margin-top: 2vh;
     margin-bottom: 5vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 83vh;
 }
@@ -240,24 +244,24 @@ section {
 #cmpsoft {
     margin-top: 2vh;
     margin-bottom: 5vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 79vh;
 }
 
 /*Section for website for wedding table allocation*/
-#wedtable{
+#wedtable {
     margin-top: 2vh;
     margin-bottom: 5vh;
-    border-radius: 10px; 
-    border: 2px solid #000000;  
+    border-radius: 10px;
+    border: 2px solid #000000;
     width: 80vw;
     height: 63vh;
 }
 
 /*Section for instagram clone app*/
-#insta_clone{
+#insta_clone {
     margin-top: 2vh;
     margin-bottom: 5vh;
     border-radius: 10px;
@@ -269,26 +273,25 @@ section {
 /*style for table */
 #marks table {
     table-layout: fixed;
-    width : 100%;
+    width: 100%;
     border-collapse: collapse;
     margin: 2vh 0;
     border-radius: 10px;
 }
 
-#marks table th, table td {
+#marks table th,
+table td {
     border: 2px solid #65858d;
     text-align: left;
     padding: 1vh;
-
 }
 
 #marks table th {
-    color: #333
+    color: #333;
 }
 
 #marks table tr:nth-child(even) {
     background-color: #bdd9e0;
-
 }
 
 /*Properties for pfp image*/
@@ -296,15 +299,15 @@ section {
 #pfpimage {
     float: right;
     position: relative;
-    top: -19.8vh; 
-    width: 12vw;      
-    height: 33vh;       
-    border: 2px solid black; 
+    top: -19.8vh;
+    width: 12vw;
+    height: 33vh;
+    border: 2px solid black;
 }
 
 #imp1 {
     position: relative;
-    top: 2.3vh ;
+    top: 2.3vh;
     right: -6vw;
     width: 27vw;
     height: 59vh;
@@ -313,80 +316,79 @@ section {
 
 #imp2 {
     position: relative;
-    top: 2.3vh ;
+    top: 2.3vh;
     right: -11vw;
     width: 28vw;
     height: 59vh;
-    border: 2px solid black; 
+    border: 2px solid black;
 }
 
 #tictactoeimg {
     position: relative;
-    top: 2.3vh ;
+    top: 2.3vh;
     right: -24vw;
     width: 29vw;
     height: 60vh;
     border: 2px solid black;
-
 }
 
 #mvz {
     position: relative;
-    top: 2.3vh ;
+    top: 2.3vh;
     right: -24vw;
     width: 29vw;
     height: 60vh;
-    border: 2px solid black;  
+    border: 2px solid black;
 }
 
-#decsoftimg{
+#decsoftimg {
     position: relative;
-    top: 2.3vh ;
+    top: 2.3vh;
     right: -24vw;
     width: 29vw;
     height: 60vh;
-    border: 2px solid black;  
+    border: 2px solid black;
 }
 
-#wed1im{
+#wed1im {
     position: relative;
-    top: 2.3vh ;
+    top: 2.3vh;
     right: -6vw;
     width: 28vw;
     height: 42vh;
     border: 2px solid black;
 }
 
-#wed2im{
+#wed2im {
     position: relative;
-    top: 2.3vh ;
+    top: 2.3vh;
     right: -11vw;
     width: 28vw;
     height: 42vh;
-    border: 2px solid black; 
+    border: 2px solid black;
 }
 
 /*style for app scroll images*/
 .image-scroll-container {
-    display: flex; 
+    display: flex;
     margin: 0 auto;
-    overflow-x: auto; 
-    white-space: nowrap; 
-    gap: 1.2vw; 
-    scrollbar-width: thin; 
-    scrollbar-color: blue #65858d; 
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 1.2vw;
+    scrollbar-width: thin;
+    scrollbar-color: blue #65858d;
     width: 54vw;
 }
 
 .image-scroll-container img {
-    flex: 0 0 auto; 
-    height: 65vh; 
+    flex: 0 0 auto;
+    height: 65vh;
     width: 15.5vw;
 }
 
 /* Styles for customizing the scrollbar for Webkit browsers like Chrome, Safari */
 .image-scroll-container::-webkit-scrollbar {
-    height: 1.9vh; 
+    height: 1.9vh;
 }
 
 .image-scroll-container::-webkit-scrollbar-track {
@@ -399,8 +401,6 @@ section {
     border-radius: 10px; /* Roundness of the scrollbar thumb */
 }
 
-
-
 /* Responsive styles */
 @media (max-width: 768px) {
     body {
@@ -412,7 +412,8 @@ section {
         height: auto;
     }
 
-    .menu, .social-media {
+    .menu,
+    .social-media {
         text-align: center;
     }
 
@@ -425,7 +426,8 @@ section {
         padding: 0 10px;
     }
 
-    .intro-content, .intro-buttons {
+    .intro-content,
+    .intro-buttons {
         text-align: center;
     }
 
