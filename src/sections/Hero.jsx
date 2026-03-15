@@ -83,7 +83,7 @@ export default function Hero() {
                         >
                             <Box
                                 component="img"
-                                src="/Photos/pfp.jpg"
+                                src={`${import.meta.env.BASE_URL}Photos/pfp.jpg`}
                                 alt="Diehan Drotschie"
                                 sx={{
                                     width: "100%",

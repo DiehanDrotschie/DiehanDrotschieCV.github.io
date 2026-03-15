@@ -1,3 +1,5 @@
+const baseUrl = import.meta.env.BASE_URL;
+
 export const navItems = [
     { label: "About", href: "#about" },
     { label: "Skills", href: "#skills" },
@@ -27,42 +29,45 @@ export const projects = [
         title: "Tic Tac Toe",
         description:
             "A Java-based game that detects wins, draws, and supports quick rematches.",
-        images: ["/Photos/tictactoe.jpg"],
+        images: [`${baseUrl}Photos/tictactoe.jpg`],
     },
     {
         title: "Impasse Game",
         description:
             "Grid-based puzzle with multi-color constraints and rule-driven solving.",
-        images: ["/Photos/imp1.jpg", "/Photos/imp2.jpg"],
+        images: [`${baseUrl}Photos/imp1.jpg`, `${baseUrl}Photos/imp2.jpg`],
     },
     {
         title: "Moving Maze",
         description:
             "A shifting maze game with player tokens, board pushes, and goal-oriented play.",
-        images: ["/Photos/mvz.jpg"],
+        images: [`${baseUrl}Photos/mvz.jpg`],
     },
     {
         title: "Compression + Decompression Software",
         description:
             "Finite automata-based compression for images and text, with reversible decoding.",
-        images: ["/Photos/decsoft.jpg"],
+        images: [`${baseUrl}Photos/decsoft.jpg`],
     },
     {
         title: "Wedding Table Allocation",
         description:
             "Guest lookup experience with table and date pairing from JSON records.",
-        images: ["/Photos/wedding1.jpg", "/Photos/wedding2.jpg"],
+        images: [
+            `${baseUrl}Photos/wedding1.jpg`,
+            `${baseUrl}Photos/wedding2.jpg`,
+        ],
     },
     {
         title: "Instagram Clone",
         description:
             "Dart + Firebase project exploring uploads, feeds, search, and social interactions.",
         images: [
-            "/Photos/ios1.jpg",
-            "/Photos/ios2.jpg",
-            "/Photos/ios3.jpg",
-            "/Photos/ios4.jpg",
-            "/Photos/ios5.jpg",
+            `${baseUrl}Photos/ios1.jpg`,
+            `${baseUrl}Photos/ios2.jpg`,
+            `${baseUrl}Photos/ios3.jpg`,
+            `${baseUrl}Photos/ios4.jpg`,
+            `${baseUrl}Photos/ios5.jpg`,
         ],
     },
 ];
