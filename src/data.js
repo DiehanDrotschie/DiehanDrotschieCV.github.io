@@ -22,6 +22,7 @@ export const skills = [
     "C#",
     "Aws",
     "Svelte",
+    "SQL",
 ];
 
 export const projects = [

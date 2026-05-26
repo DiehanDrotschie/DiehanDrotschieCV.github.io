@@ -40,10 +40,10 @@ export default function Experience() {
                                 May 2025 - Present
                             </Typography>
                             <Typography>
-                                Focused on service development as lead Service
-                                Developer for all new games. Using a range of
-                                resources to build tools for internal usage to
-                                improve productivity.
+                                Took on expanded responsibility across multiple games simultaneously, handling service-related bug fixes and contributing to game architecture improvements. Onboarded and mentored a new developer through building their first game service. Built internal automation tools to streamline processes, while continuing to deepen expertise in C#, .NET, and scalable backend development.
+                            </Typography>
+                            <Typography>
+                                In 2026, assumed sole ownership of all service development — responsible for creating, managing, and improving game services end-to-end. Expanded into client-side development, implementing features across games. Developed an AI-powered translation tool leveraging AWS to automate and significantly reduce the cost of the team's localisation workflow.
                             </Typography>
                         </Stack>
                     </Box>
