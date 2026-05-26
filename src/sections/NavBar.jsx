@@ -51,7 +51,7 @@ export default function NavBar({ navItems }) {
         <Button
           variant="contained"
           color="primary"
-          href="./DiehanCV.pdf"
+          href={`${import.meta.env.BASE_URL}DiehanCV.pdf`}
           target="_blank"
           rel="noreferrer"
           sx={{ display: { xs: "none", sm: "inline-flex" } }}
@@ -80,7 +80,7 @@ export default function NavBar({ navItems }) {
             fullWidth
             variant="contained"
             color="primary"
-            href="./DiehanCV.pdf"
+            href={`${import.meta.env.BASE_URL}DiehanCV.pdf`}
             target="_blank"
             rel="noreferrer"
           >
