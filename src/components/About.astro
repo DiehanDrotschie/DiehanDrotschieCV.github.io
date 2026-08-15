@@ -1,0 +1,45 @@
+---
+import { about } from "../data/site.js";
+---
+
+<section id="about" class="section-tight">
+    <div class="container grid grid-2">
+        <div>
+            <h2>Summary</h2>
+            <p class="text-secondary">{about.summary}</p>
+        </div>
+        <div class="card">
+            <h3>About Me</h3>
+            <div class="about-facts">
+                {
+                    about.facts.map(([label, value]) => (
+                        <div>
+                            <p class="text-secondary fact-label">{label}</p>
+                            <p class="fact-value">{value}</p>
+                        </div>
+                    ))
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .about-facts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+
+    .fact-label {
+        margin: 0;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .fact-value {
+        margin: 0.15rem 0 0;
+        font-weight: 500;
+    }
+</style>

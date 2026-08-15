@@ -1,0 +1,68 @@
+---
+import { achievements, academics } from "../data/site.js";
+---
+
+<section id="achievements" class="section">
+    <div class="container">
+        <h2>Achievements</h2>
+        <div class="grid grid-2">
+            <div class="card">
+                <h4>Academic</h4>
+                <p class="text-secondary">{achievements.academicIntro}</p>
+                {achievements.academic.map((item) => <p>- {item}</p>)}
+            </div>
+            <div class="stack">
+                <div class="card">
+                    <h4>Culture</h4>
+                    {achievements.culture.map((item) => <p>- {item}</p>)}
+                </div>
+                <div class="card">
+                    <h4>Sports</h4>
+                    {achievements.sports.map((item) => <p>- {item}</p>)}
+                </div>
+            </div>
+        </div>
+
+        <div class="card university-card">
+            <h3>University Education</h3>
+            <p class="text-secondary">{academics.intro}</p>
+            {
+                academics.years.map((year) => (
+                    <div>
+                        <h4>{year.title}</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Mark</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {year.rows.map((row) => (
+                                    <tr>
+                                        <td>{row[0]}</td>
+                                        <td>{row[1]}</td>
+                                        <td>{row[2]}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ))
+            }
+        </div>
+    </div>
+</section>
+
+<style>
+    .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .university-card {
+        margin-top: 1.5rem;
+    }
+</style>

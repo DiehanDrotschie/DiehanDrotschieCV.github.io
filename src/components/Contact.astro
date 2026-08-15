@@ -1,0 +1,54 @@
+---
+import { contact } from "../data/site.js";
+---
+
+<section id="contact" class="section-tight">
+    <div class="container">
+        <div class="card contact-card">
+            <div>
+                <h3>{contact.heading}</h3>
+                <p class="text-secondary">{contact.subtext}</p>
+            </div>
+            <div class="contact-actions">
+                <a class="btn btn-primary" href={`mailto:${contact.email}`}>
+                    Email Me
+                </a>
+                <a
+                    class="btn btn-outline"
+                    href={contact.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    LinkedIn
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .contact-card {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 2rem;
+    }
+
+    .contact-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+        .contact-card {
+            flex-direction: row;
+            align-items: center;
+        }
+        .contact-actions {
+            flex-direction: row;
+        }
+    }
+</style>

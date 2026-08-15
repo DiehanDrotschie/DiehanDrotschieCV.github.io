@@ -1,0 +1,70 @@
+---
+import { hero } from "../data/site.js";
+
+const base = import.meta.env.BASE_URL;
+---
+
+<section class="section">
+    <div class="container hero-grid">
+        <div class="hero-copy">
+            <p class="eyebrow">{hero.eyebrow}</p>
+            <h1>{hero.headline}</h1>
+            <p class="text-secondary hero-subhead">{hero.subhead}</p>
+            <div class="hero-ctas">
+                <a class="btn btn-primary" href="#work">View Portfolio</a>
+                <a class="btn btn-outline" href="#contact">Get In Touch</a>
+            </div>
+            <div class="hero-tags">
+                {hero.tags.map((tag) => <span class="chip">{tag}</span>)}
+            </div>
+        </div>
+        <div class="hero-image card">
+            <img src={`${base}Photos/pfp.jpg`} alt="Diehan Drotschie" />
+        </div>
+    </div>
+</section>
+
+<style>
+    .hero-grid {
+        display: grid;
+        gap: 2.5rem;
+        align-items: center;
+    }
+
+    .hero-subhead {
+        max-width: 560px;
+        font-size: 1.1rem;
+    }
+
+    .hero-ctas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .hero-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .hero-image {
+        display: flex;
+        justify-content: center;
+        padding: 0.75rem;
+    }
+
+    .hero-image img {
+        border-radius: 12px;
+        max-width: 360px;
+        width: 100%;
+        box-shadow: 0 30px 60px rgba(15, 91, 91, 0.2);
+    }
+
+    @media (min-width: 900px) {
+        .hero-grid {
+            grid-template-columns: 7fr 5fr;
+        }
+    }
+</style>
