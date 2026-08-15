@@ -10,8 +10,13 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
 ---
 
 <script define:vars={{ appMeta }}>
+    const MOBILE_QUERY = "(max-width: 900px), (pointer: coarse)";
     let zIndexCounter = 10;
     let openOffset = 0;
+
+    function isMobile() {
+        return window.matchMedia(MOBILE_QUERY).matches;
+    }
 
     function getWindow(id) {
         return document.querySelector(`.window[data-app="${id}"]`);
@@ -28,25 +33,46 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
             .forEach((el) => el.classList.toggle("active", active));
     }
 
+    function sizeForMobile(win) {
+        win.style.left = "10px";
+        win.style.top = "50px";
+        win.style.width = "calc(100vw - 88px)";
+        win.style.height = "calc(100vh - 84px)";
+        win.style.transform = "none";
+    }
+
+    function sizeForDesktop(win, id) {
+        const meta = appMeta.find((a) => a.id === id);
+        const width = meta?.width ?? 560;
+        const height = meta?.height ?? 420;
+        win.style.width = `${width}px`;
+        win.style.height = `${height}px`;
+        const left = Math.max(20, window.innerWidth / 2 - width / 2 + openOffset);
+        const top = Math.max(60, 90 + openOffset);
+        win.style.left = `${left}px`;
+        win.style.top = `${top}px`;
+        win.style.transform = "none";
+        openOffset = (openOffset + 28) % 140;
+    }
+
     function openWindow(id) {
         const win = getWindow(id);
         if (!win) return;
-        if (win.style.display !== "flex") {
-            const meta = appMeta.find((a) => a.id === id);
-            const width = meta?.width ?? 560;
-            const height = meta?.height ?? 420;
-            win.style.width = `${width}px`;
-            win.style.height = `${height}px`;
-            const left = Math.max(
-                20,
-                window.innerWidth / 2 - width / 2 + openOffset,
-            );
-            const top = Math.max(60, 90 + openOffset);
-            win.style.left = `${left}px`;
-            win.style.top = `${top}px`;
-            win.style.transform = "none";
-            openOffset = (openOffset + 28) % 140;
+
+        if (isMobile()) {
+            // One window at a time on mobile — keep things simple and full-screen.
+            document.querySelectorAll(".window.open").forEach((w) => {
+                if (w !== win) {
+                    w.classList.remove("open");
+                    w.style.display = "none";
+                    setDockActive(w.getAttribute("data-app"), false);
+                }
+            });
+            sizeForMobile(win);
+        } else if (win.style.display !== "flex") {
+            sizeForDesktop(win, id);
         }
+
         win.classList.add("open");
         win.style.display = "flex";
         focusWindow(win);
@@ -107,6 +133,7 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
             let startTop = 0;
 
             titlebar.addEventListener("mousedown", (e) => {
+                if (isMobile()) return;
                 dragging = true;
                 startX = e.clientX;
                 startY = e.clientY;
@@ -129,6 +156,17 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
             window.addEventListener("mouseup", () => {
                 dragging = false;
             });
+        }
+    });
+
+    // Keep the open window sized correctly across orientation/viewport changes.
+    window.addEventListener("resize", () => {
+        const openWin = document.querySelector(".window.open");
+        if (!openWin) return;
+        if (isMobile()) {
+            sizeForMobile(openWin);
+        } else {
+            sizeForDesktop(openWin, openWin.getAttribute("data-app"));
         }
     });
 
@@ -179,7 +217,5 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
     });
 
     // Open default windows on load
-    appMeta
-        .filter((a) => a.openOnLoad)
-        .forEach((a) => openWindow(a.id));
+    appMeta.filter((a) => a.openOnLoad).forEach((a) => openWindow(a.id));
 </script>

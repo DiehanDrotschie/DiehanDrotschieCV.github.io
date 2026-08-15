@@ -369,19 +369,68 @@
     background: rgba(255, 255, 255, 0.08);
 }
 
-/* Mobile fallback */
-.mobile-view {
-    display: none;
-}
-
+/* Mobile / touch — same desktop shell, adapted layout:
+   dock moves to a vertical rail on the right, menu bar trims to
+   essentials, windows open one at a time near-fullscreen (see
+   DesktopScript.astro's isMobile()/sizeForMobile()). */
 @media (max-width: 900px), (pointer: coarse) {
-    .desktop {
+    .menu-left .menu-item[data-open],
+    .hint-row {
         display: none;
     }
 
-    .mobile-view {
-        display: block;
-        background: var(--bg);
-        min-height: 100vh;
+    .menu-right {
+        gap: 0.75rem;
+    }
+
+    .menu-bar button.menu-item#spotlight-trigger kbd {
+        display: none;
+    }
+
+    .dock {
+        top: 50%;
+        bottom: auto;
+        left: auto;
+        right: 10px;
+        transform: translateY(-50%);
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 0.5rem;
+        max-height: calc(100vh - 90px);
+        overflow-y: auto;
+    }
+
+    .dock-item {
+        width: 46px;
+        height: 46px;
+    }
+
+    .dock-item:hover {
+        transform: scale(1.08);
+    }
+
+    .dock-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .dock-label {
+        bottom: auto;
+        top: 50%;
+        left: auto;
+        right: calc(100% + 10px);
+        transform: translateY(-50%);
+    }
+
+    .dock-item.active::after {
+        bottom: auto;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .window-body {
+        padding: 1.1rem;
     }
 }
