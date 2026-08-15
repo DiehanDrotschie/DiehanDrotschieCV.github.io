@@ -1,0 +1,238 @@
+# Diehan Drotschie — CV / Portfolio Content
+
+This file is the single source of truth for all text/content currently displayed on the
+React version of the site, captured before the Astro refactor so nothing is lost.
+
+Downloadable/media assets referenced below live in `public/`:
+- `public/DiehanCV.pdf` — downloadable CV
+- `public/Photos/pfp.jpg` — profile photo
+- `public/Photos/*` — project screenshots (see Portfolio section)
+
+---
+
+## Navigation
+
+- About → `#about`
+- Skills → `#skills`
+- Work → `#work`
+- Experience → `#experience`
+- Achievements → `#achievements`
+- Contact → `#contact`
+
+Nav bar also has a "Download CV" button linking to `DiehanCV.pdf`.
+
+---
+
+## Hero
+
+**Eyebrow:** Software Developer
+
+**Headline:** Building clean, dependable software with a data-informed mindset.
+
+**Subhead:** Dedicated and proactive software developer with a strong foundation in
+software engineering principles, real-world project experience, and a commitment to
+continuous learning.
+
+**CTAs:** "View Portfolio" (→ `#work`), "Get In Touch" (→ `#contact`)
+
+**Tags/chips:** South African · Software Developer level 1 · AWS + C# Focus
+
+**Image:** `Photos/pfp.jpg`
+
+---
+
+## About
+
+### Summary
+Demonstrated ability to excel in both academic and practical settings, with experience
+developing robust software solutions and contributing to real-world projects.
+Proficient across multiple languages and frameworks, with a strong drive to keep
+improving.
+
+### About Me
+- **Nationality:** South African
+- **Age:** 22 yrs
+- **Sex:** Male
+
+---
+
+## Skills (Programming Languages)
+
+- Java
+- C
+- Python
+- HTML
+- CSS
+- R
+- Dart + Firebase
+- Delphi
+- JavaScript/TypeScript + PIXI.js
+- C#
+- AWS
+- Svelte
+- SQL
+
+---
+
+## Portfolio / Work
+
+These are some very basic projects I have worked on.
+
+1. **Tic Tac Toe**
+   A Java-based game that detects wins, draws, and supports quick rematches.
+   Images: `Photos/tictactoe.jpg`
+
+2. **Impasse Game**
+   Grid-based puzzle with multi-color constraints and rule-driven solving.
+   Images: `Photos/imp1.jpg`, `Photos/imp2.jpg`
+
+3. **Moving Maze**
+   A shifting maze game with player tokens, board pushes, and goal-oriented play.
+   Images: `Photos/mvz.jpg`
+
+4. **Compression + Decompression Software**
+   Finite automata-based compression for images and text, with reversible decoding.
+   Images: `Photos/decsoft.jpg`
+
+5. **Wedding Table Allocation**
+   Guest lookup experience with table and date pairing from JSON records.
+   Images: `Photos/wedding1.jpg`, `Photos/wedding2.jpg`
+
+6. **Instagram Clone**
+   Dart + Firebase project exploring uploads, feeds, search, and social interactions.
+   Images: `Photos/ios1.jpg`, `Photos/ios2.jpg`, `Photos/ios3.jpg`, `Photos/ios4.jpg`,
+   `Photos/ios5.jpg` (additional images `ios6.jpg`–`ios10.jpg` also exist in `public/Photos/`)
+
+> Note: the React site rendered these as cards that open a lightbox/gallery dialog with
+> prev/next navigation and thumbnails when a project has multiple images.
+
+---
+
+## Experience
+
+### Software Engineering Internship, Games Global
+**June 2024 – July 2024**
+Contributed to interactive gameplay features and collaborated with a talented team,
+gaining hands-on experience in game development.
+
+### Graduate Software Developer, Games Global
+**January 2025 – May 2025**
+Focused on service development while upskilling in AWS and C#. Continued to
+contribute to interactive gameplay features across team projects.
+
+### Software Developer Level 1, Games Global
+**May 2025 – Present**
+Took on expanded responsibility across multiple games simultaneously, handling
+service-related bug fixes and contributing to game architecture improvements.
+Onboarded and mentored a new developer through building their first game service.
+Built internal automation tools to streamline processes, while continuing to deepen
+expertise in C#, .NET, and scalable backend development.
+
+In 2026, assumed sole ownership of all service development — responsible for
+creating, managing, and improving game services end-to-end. Expanded into
+client-side development, implementing features across games. Developed an
+AI-powered translation tool leveraging AWS to automate and significantly reduce the
+cost of the team's localisation workflow.
+
+---
+
+## Achievements
+
+### Academic
+Robertson High School (2017–2021) | Grade 12 (Senior Certificate) - 94%
+
+- Robertson High School Dux Learners Award
+- Top 10 Achievers Award - Western Cape
+- Student Council Member: Deputy Head Boy
+- Honorary academic awards - 5 years
+- 1st Position in Grade - Gr 8-12
+- SA Mathematics Olympiad
+- Member of Golden Key International Society
+- Grade 12 Average: 94.57%
+
+### Culture
+- CSV Team Leader
+
+### Sports
+- Hockey: 0/19 A First Team, Hockey Umpire, Qualified for Tour team to New Zealand
+- Athletics: Captain of Team
+- Swimming: School First Team, Captain of Team
+
+### University Education
+Stellenbosch University 2022: BSc Computer Science focal area - Data Science.
+
+#### 1st Year marks
+| Subject | Mark | Remarks |
+|---|---|---|
+| Computer Science 114 | 91 | Pass with distinction |
+| Mathematics 114 | 83 | Pass with distinction |
+| Probability Theory and Statistics 114 | 77 | Pass with distinction |
+| Science in Context 178 | 77 | Pass with distinction |
+| Data Science 141 | 81 | Pass with distinction |
+| Computer Science 144 | 94 | Pass with distinction |
+| Applied Mathematics 144 | 88 | Pass with distinction |
+| Mathematics 144 | 84 | Pass with distinction |
+
+#### 2nd Year marks
+| Subject | Mark | Remarks |
+|---|---|---|
+| Computer Science 214 | 80 | Pass with distinction |
+| Applied Mathematics 214 | 85 | Pass with distinction |
+| Mathematics 214 | 84 | Pass with distinction |
+| Mathematical Statistics 214 | 80 | Pass with distinction |
+| Computer Science 244 | 76 | Pass with distinction |
+| Mathematics 244 | 82 | Pass with distinction |
+| Mathematical Statistics 245 | 60 | Pass |
+| Mathematical Statistics 246 | 85 | Pass with distinction |
+| Data Science 241 | 76 | Pass with distinction |
+
+#### 3rd Year marks
+| Subject | Mark | Remarks |
+|---|---|---|
+| Computer Science 315 | 83 | Pass with distinction |
+| Computer Science 314 | 91 | Pass with distinction |
+| Mathematical Statistics 312 | 73 | Pass |
+| Data Science 316 | 82 | Pass with distinction |
+| Computer Science 343 | 92 | Pass with distinction |
+| Computer Science 344 | 86 | Pass with distinction |
+| Computer Science 345 | 90 | Pass with distinction |
+| Data Science 346 | 84 | Pass with distinction |
+
+---
+
+## Contact
+
+**Heading:** Let us build something solid.
+**Subtext:** Reach out for collaborations, roles, or project discussions.
+
+- Email: [diehandrotschie@gmail.com](mailto:diehandrotschie@gmail.com) ("Email Me" button)
+- LinkedIn: https://www.linkedin.com/in/diehan-drotschie-168a781b3/ ("LinkedIn" button)
+
+---
+
+## Footer
+
+(c) 2026 Diehan Drotschie. Built with React and Material UI.
+(To be updated to reflect Astro after the refactor.)
+
+---
+
+## Assets inventory (must be carried over to Astro `public/`)
+
+- `DiehanCV.pdf`
+- `Photos/pfp.jpg`
+- `Photos/tictactoe.jpg`
+- `Photos/imp1.jpg`
+- `Photos/imp2.jpg`
+- `Photos/mvz.jpg`
+- `Photos/decsoft.jpg`
+- `Photos/wedding1.jpg`
+- `Photos/wedding2.jpg`
+- `Photos/ios1.jpg` … `Photos/ios10.jpg`
+
+## Deployment notes
+
+- Deployed to GitHub Pages at `https://diehandrotschie.github.io/DiehanCV`
+- GitHub Actions workflow: `.github/workflows/pages.yml` (build on push/PR to `main`,
+  deploy on push to `main` via `peaceiris/actions-gh-pages`)
+- `package.json` also has a manual `npm run deploy` via `gh-pages -d dist`
