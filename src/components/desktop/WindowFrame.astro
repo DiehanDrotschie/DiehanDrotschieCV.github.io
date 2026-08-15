@@ -9,9 +9,11 @@ const { id, title } = Astro.props;
 
 <div class="window" data-app={id}>
     <div class="window-titlebar">
-        <button type="button" class="window-dot close" aria-label="Close"></button>
-        <span class="window-dot minimize" aria-hidden="true"></span>
-        <span class="window-dot zoom" aria-hidden="true"></span>
+        <div class="window-dots">
+            <button type="button" class="window-dot close" aria-label="Close"></button>
+            <span class="window-dot minimize" aria-hidden="true"></span>
+            <span class="window-dot zoom" aria-hidden="true"></span>
+        </div>
         <span class="window-title">{title}</span>
     </div>
     <div class="window-body">

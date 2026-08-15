@@ -2,10 +2,7 @@
     position: fixed;
     inset: 0;
     overflow: hidden;
-    background:
-        radial-gradient(circle at 20% 20%, rgba(192, 124, 60, 0.25), transparent 45%),
-        radial-gradient(circle at 80% 0%, rgba(15, 91, 91, 0.35), transparent 50%),
-        linear-gradient(160deg, #1c3a3a 0%, #0f2323 60%, #0a1717 100%);
+    background: #0b1a2e;
 }
 
 /* Menu bar */
@@ -14,24 +11,36 @@
     top: 0;
     left: 0;
     right: 0;
+    z-index: 500;
+    background: rgba(10, 14, 20, 0.55);
+    backdrop-filter: blur(20px) saturate(1.6);
+    color: #f4f1ec;
+    font-size: 0.85rem;
+    user-select: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.menu-row {
     height: 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
-    background: rgba(20, 30, 30, 0.55);
-    backdrop-filter: blur(20px);
-    color: #f4f1ec;
-    font-size: 0.85rem;
-    z-index: 500;
-    user-select: none;
 }
 
-.menu-bar .menu-left,
-.menu-bar .menu-right {
+.menu-left,
+.menu-right {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
+    gap: 1.35rem;
+}
+
+.menu-logo {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #ffe066, #ff7a1a);
+    flex-shrink: 0;
 }
 
 .menu-bar .brand {
@@ -44,17 +53,51 @@
     color: inherit;
     font: inherit;
     cursor: pointer;
-    opacity: 0.85;
-    padding: 0;
+    opacity: 0.78;
+    padding: 0.3rem 0.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
 .menu-bar button.menu-item:hover {
     opacity: 1;
 }
 
+.menu-bar kbd {
+    font-family: inherit;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+}
+
 .menu-bar .clock {
     font-variant-numeric: tabular-nums;
-    opacity: 0.85;
+    opacity: 0.8;
+}
+
+.hint-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    height: 26px;
+    padding: 0 1rem;
+    font-size: 0.72rem;
+    color: rgba(244, 241, 236, 0.6);
+    background: rgba(10, 14, 20, 0.35);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hint-row span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.hint-fill {
+    flex: 1;
 }
 
 /* Windows */
@@ -64,11 +107,15 @@
     left: 50%;
     display: none;
     flex-direction: column;
-    background: var(--surface);
-    border-radius: 12px;
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+    background: rgba(246, 244, 240, 0.88);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 10px;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.4) inset,
+        0 30px 70px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     min-width: 280px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .window.open {
@@ -78,16 +125,22 @@
 .window-titlebar {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 0.75rem;
-    background: #ece7df;
-    border-bottom: 1px solid var(--border);
+    padding: 0.55rem 0.85rem;
+    background: rgba(255, 255, 255, 0.35);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     cursor: grab;
     user-select: none;
+    position: relative;
 }
 
 .window-titlebar:active {
     cursor: grabbing;
+}
+
+.window-dots {
+    display: flex;
+    gap: 0.45rem;
+    z-index: 1;
 }
 
 .window-dot {
@@ -97,32 +150,35 @@
     border: none;
     padding: 0;
     cursor: pointer;
+    background-size: cover;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
 }
 
 .window-dot.close {
-    background: #ff5f57;
+    background: radial-gradient(circle at 30% 30%, #ff8a80, #ff5f57 60%, #e0443e);
 }
 
 .window-dot.minimize {
-    background: #febc2e;
+    background: radial-gradient(circle at 30% 30%, #ffe08a, #febc2e 60%, #dea123);
 }
 
 .window-dot.zoom {
-    background: #28c840;
+    background: radial-gradient(circle at 30% 30%, #6fe08a, #28c840 60%, #1aab2e);
 }
 
 .window-title {
-    flex: 1;
-    text-align: center;
-    font-size: 0.85rem;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-secondary);
-    margin-right: 3.6rem;
 }
 
 .window-body {
     padding: 1.5rem;
     overflow-y: auto;
+    background: rgba(255, 255, 255, 0.35);
 }
 
 .app-content h2:first-child,
@@ -138,38 +194,70 @@
     transform: translateX(-50%);
     display: flex;
     align-items: flex-end;
-    gap: 0.6rem;
-    padding: 0.6rem 0.9rem;
-    background: rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    gap: 0.65rem;
+    padding: 0.55rem 0.85rem;
+    background: rgba(20, 24, 30, 0.45);
+    backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 20px;
     z-index: 500;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
 }
 
 .dock-item {
     position: relative;
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.92);
+    width: 54px;
+    height: 54px;
     border: none;
+    background: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--primary);
-    transition: transform 0.15s ease;
     flex-shrink: 0;
+    transition: transform 0.15s ease;
 }
 
-.dock-item svg {
+.dock-item:hover {
+    transform: translateY(-10px) scale(1.1);
+}
+
+.dock-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.dock-icon svg {
     width: 26px;
     height: 26px;
 }
 
-.dock-item:hover {
-    transform: translateY(-8px) scale(1.08);
+.dock-label {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 24, 30, 0.85);
+    color: #f4f1ec;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+}
+
+.dock-item:hover .dock-label {
+    opacity: 1;
 }
 
 .dock-item.active::after {
@@ -188,7 +276,7 @@
 .spotlight-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 20, 20, 0.35);
+    background: rgba(0, 0, 0, 0.35);
     display: none;
     align-items: flex-start;
     justify-content: center;
@@ -202,26 +290,46 @@
 
 .spotlight-box {
     width: min(560px, 90vw);
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
+    background: rgba(28, 32, 38, 0.85);
+    backdrop-filter: blur(28px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
     overflow: hidden;
+    color: #f4f1ec;
+}
+
+.spotlight-search-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1.25rem;
+}
+
+.spotlight-icon {
+    width: 20px;
+    height: 20px;
+    color: rgba(244, 241, 236, 0.6);
+    flex-shrink: 0;
 }
 
 .spotlight-input {
-    width: 100%;
+    flex: 1;
     border: none;
     outline: none;
-    padding: 1rem 1.25rem;
+    padding: 1rem 0;
     font-size: 1.15rem;
     background: transparent;
-    color: var(--text);
+    color: inherit;
     font-family: inherit;
 }
 
+.spotlight-input::placeholder {
+    color: rgba(244, 241, 236, 0.45);
+}
+
 .spotlight-results {
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     max-height: 320px;
     overflow-y: auto;
 }
@@ -231,25 +339,34 @@
     align-items: center;
     gap: 0.75rem;
     width: 100%;
-    padding: 0.7rem 1.25rem;
+    padding: 0.55rem 1.25rem;
     background: none;
     border: none;
     text-align: left;
     font: inherit;
-    color: var(--text);
+    color: inherit;
     cursor: pointer;
 }
 
-.spotlight-result svg {
-    width: 18px;
-    height: 18px;
-    color: var(--primary);
+.spotlight-result-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
     flex-shrink: 0;
+}
+
+.spotlight-result-icon svg {
+    width: 16px;
+    height: 16px;
 }
 
 .spotlight-result:hover,
 .spotlight-result.highlighted {
-    background: rgba(15, 91, 91, 0.08);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 /* Mobile fallback */

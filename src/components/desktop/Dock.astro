@@ -11,8 +11,10 @@ import { apps } from "../../data/apps.js";
                 data-open={app.id}
                 title={app.title}
                 aria-label={app.title}
-                set:html={`${app.icon}`}
-            />
+            >
+                <span class="dock-icon" style={`background:${app.gradient}`} set:html={app.icon} />
+                <span class="dock-label">{app.title}</span>
+            </button>
         ))
     }
 </div>

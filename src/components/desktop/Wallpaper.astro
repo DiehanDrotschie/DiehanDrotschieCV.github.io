@@ -1,0 +1,84 @@
+<svg
+    class="wallpaper"
+    viewBox="0 0 1600 900"
+    preserveAspectRatio="xMidYMid slice"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+>
+    <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0b1a2e" />
+            <stop offset="45%" stop-color="#12314a" />
+            <stop offset="75%" stop-color="#1c4f5c" />
+            <stop offset="100%" stop-color="#2c7a72" />
+        </linearGradient>
+        <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#eaf3ff" stop-opacity="0.9" />
+            <stop offset="100%" stop-color="#eaf3ff" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="ridgeFar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#173349" />
+            <stop offset="100%" stop-color="#0f2536" />
+        </linearGradient>
+        <linearGradient id="ridgeMid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0e2233" />
+            <stop offset="100%" stop-color="#081724" />
+        </linearGradient>
+        <linearGradient id="ridgeNear" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#081522" />
+            <stop offset="100%" stop-color="#040c14" />
+        </linearGradient>
+        <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0c2436" />
+            <stop offset="100%" stop-color="#04121c" />
+        </linearGradient>
+    </defs>
+
+    <rect width="1600" height="900" fill="url(#sky)" />
+    <circle cx="1180" cy="150" r="140" fill="url(#moonGlow)" />
+    <circle cx="1180" cy="150" r="46" fill="#f4f8ff" opacity="0.95" />
+
+    <g opacity="0.7">
+        <circle cx="120" cy="90" r="1.4" fill="#fff" />
+        <circle cx="260" cy="60" r="1.1" fill="#fff" />
+        <circle cx="360" cy="140" r="1.6" fill="#fff" />
+        <circle cx="480" cy="70" r="1.1" fill="#fff" />
+        <circle cx="620" cy="110" r="1.3" fill="#fff" />
+        <circle cx="760" cy="50" r="1.2" fill="#fff" />
+        <circle cx="900" cy="90" r="1.5" fill="#fff" />
+        <circle cx="1400" cy="80" r="1.3" fill="#fff" />
+        <circle cx="1500" cy="150" r="1.1" fill="#fff" />
+        <circle cx="200" cy="200" r="1" fill="#fff" />
+    </g>
+
+    <path
+        d="M0,420 L100,360 220,410 340,320 460,400 600,340 720,410 860,350 1000,420 1140,340 1280,400 1400,350 1600,410 L1600,900 0,900 Z"
+        fill="url(#ridgeFar)"
+    />
+    <path
+        d="M0,520 L140,440 300,500 480,420 640,500 820,430 980,510 1160,440 1340,500 1600,450 L1600,900 0,900 Z"
+        fill="url(#ridgeMid)"
+    />
+    <path
+        d="M0,640 L180,560 380,630 560,540 760,620 960,550 1180,630 1400,560 1600,620 L1600,900 0,900 Z"
+        fill="url(#ridgeNear)"
+    />
+
+    <rect x="0" y="700" width="1600" height="200" fill="url(#water)" />
+    <g opacity="0.25" stroke="#bfe6ff" stroke-width="1.5">
+        <line x1="200" y1="740" x2="340" y2="740" />
+        <line x1="520" y1="780" x2="700" y2="780" />
+        <line x1="900" y1="750" x2="1080" y2="750" />
+        <line x1="1200" y1="800" x2="1360" y2="800" />
+    </g>
+</svg>
+
+<style>
+    .wallpaper {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+    }
+</style>

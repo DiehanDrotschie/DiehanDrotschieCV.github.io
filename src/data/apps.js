@@ -1,10 +1,11 @@
-const icon = (paths) =>
-    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+const icon = (paths, viewBox = "0 0 24 24") =>
+    `<svg viewBox="${viewBox}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 
 export const apps = [
     {
         id: "about",
         title: "About Me",
+        gradient: "linear-gradient(160deg, #6fb3ff 0%, #2f6bd6 100%)",
         icon: icon('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>'),
         width: 620,
         height: 520,
@@ -13,13 +14,15 @@ export const apps = [
     {
         id: "skills",
         title: "Skills",
-        icon: icon('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'),
+        gradient: "linear-gradient(160deg, #3a3f4a 0%, #15171c 100%)",
+        icon: icon('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', "0 0 24 24"),
         width: 520,
         height: 340,
     },
     {
         id: "work",
         title: "Portfolio",
+        gradient: "linear-gradient(160deg, #6fd0ff 0%, #1f8fe0 100%)",
         icon: icon('<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'),
         width: 680,
         height: 560,
@@ -27,6 +30,7 @@ export const apps = [
     {
         id: "experience",
         title: "Experience",
+        gradient: "linear-gradient(160deg, #ffb266 0%, #ff7a1a 100%)",
         icon: icon('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
         width: 600,
         height: 520,
@@ -34,6 +38,7 @@ export const apps = [
     {
         id: "achievements",
         title: "Achievements",
+        gradient: "linear-gradient(160deg, #ffe066 0%, #f2a900 100%)",
         icon: icon('<circle cx="12" cy="8" r="6"/><path d="M8.2 13.8 7 22l5-3 5 3-1.2-8.2"/>'),
         width: 680,
         height: 560,
@@ -41,6 +46,7 @@ export const apps = [
     {
         id: "resume",
         title: "Resume",
+        gradient: "linear-gradient(160deg, #ff8a80 0%, #e0311a 100%)",
         icon: icon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'),
         width: 640,
         height: 600,
@@ -48,6 +54,7 @@ export const apps = [
     {
         id: "contact",
         title: "Contact",
+        gradient: "linear-gradient(160deg, #6fe0a0 0%, #1fa35f 100%)",
         icon: icon('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>'),
         width: 520,
         height: 300,

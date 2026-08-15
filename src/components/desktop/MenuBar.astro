@@ -3,21 +3,31 @@ import { apps } from "../../data/apps.js";
 ---
 
 <div class="menu-bar">
-    <div class="menu-left">
-        <span class="brand">Diehan Drotschie</span>
-        {
-            apps.map((app) => (
-                <button type="button" class="menu-item" data-open={app.id}>
-                    {app.title}
-                </button>
-            ))
-        }
+    <div class="menu-row">
+        <div class="menu-left">
+            <span class="menu-logo" aria-hidden="true"></span>
+            <span class="brand">Diehan Drotschie</span>
+            {
+                apps.map((app) => (
+                    <button type="button" class="menu-item" data-open={app.id}>
+                        {app.title}
+                    </button>
+                ))
+            }
+        </div>
+        <div class="menu-right">
+            <button type="button" class="menu-item" id="spotlight-trigger" aria-label="Search">
+                <kbd>⌘K</kbd> Search
+            </button>
+            <span class="clock" id="menu-clock"></span>
+        </div>
     </div>
-    <div class="menu-right">
-        <button type="button" class="menu-item" id="spotlight-trigger" aria-label="Search">
-            ⌘K Search
-        </button>
-        <span class="clock" id="menu-clock"></span>
+    <div class="hint-row">
+        <span><kbd>⌘K</kbd> Search</span>
+        <span><kbd>⌘C</kbd> Contact</span>
+        <span><kbd>?</kbd> Help</span>
+        <span class="hint-fill" />
+        <span>Static Astro build — no backend, no tracking</span>
     </div>
 </div>
 
