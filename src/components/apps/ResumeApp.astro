@@ -1,0 +1,40 @@
+---
+const base = import.meta.env.BASE_URL;
+---
+
+<div class="app-content resume-app">
+    <div class="resume-header">
+        <h2>Resume</h2>
+        <a class="btn btn-primary" href={`${base}DiehanCV.pdf`} target="_blank" rel="noreferrer">
+            Download PDF
+        </a>
+    </div>
+    <iframe
+        src={`${base}DiehanCV.pdf`}
+        title="Diehan Drotschie CV"
+        class="resume-frame"
+        loading="lazy"
+    ></iframe>
+</div>
+
+<style>
+    .resume-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .resume-header h2 {
+        margin: 0;
+    }
+
+    .resume-frame {
+        width: 100%;
+        height: min(70vh, 720px);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+    }
+</style>

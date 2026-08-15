@@ -1,0 +1,37 @@
+---
+import { apps } from "../../data/apps.js";
+---
+
+<div class="menu-bar">
+    <div class="menu-left">
+        <span class="brand">Diehan Drotschie</span>
+        {
+            apps.map((app) => (
+                <button type="button" class="menu-item" data-open={app.id}>
+                    {app.title}
+                </button>
+            ))
+        }
+    </div>
+    <div class="menu-right">
+        <button type="button" class="menu-item" id="spotlight-trigger" aria-label="Search">
+            ⌘K Search
+        </button>
+        <span class="clock" id="menu-clock"></span>
+    </div>
+</div>
+
+<script>
+    function updateClock() {
+        const el = document.getElementById("menu-clock");
+        if (!el) return;
+        const now = new Date();
+        el.textContent = now.toLocaleTimeString([], {
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }
+    updateClock();
+    setInterval(updateClock, 30_000);
+</script>

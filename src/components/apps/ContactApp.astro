@@ -1,0 +1,23 @@
+---
+import { contact } from "../../data/site.js";
+---
+
+<div class="app-content">
+    <h2>{contact.heading}</h2>
+    <p class="text-secondary">{contact.subtext}</p>
+    <div class="contact-actions">
+        <a class="btn btn-primary" href={`mailto:${contact.email}`}>Email Me</a>
+        <a class="btn btn-outline" href={contact.linkedin} target="_blank" rel="noreferrer">
+            LinkedIn
+        </a>
+    </div>
+</div>
+
+<style>
+    .contact-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+</style>

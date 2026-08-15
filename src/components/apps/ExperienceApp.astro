@@ -1,0 +1,18 @@
+---
+import { experience } from "../../data/site.js";
+---
+
+<div class="app-content">
+    <h2>Experience</h2>
+    {
+        experience.map((item, i) => (
+            <>
+                <h4>{item.role}</h4>
+                <p class="text-secondary">{item.period}</p>
+                <p>{item.description}</p>
+                {item.extra && <p>{item.extra}</p>}
+                {i < experience.length - 1 && <hr />}
+            </>
+        ))
+    }
+</div>

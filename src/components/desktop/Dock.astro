@@ -1,0 +1,18 @@
+---
+import { apps } from "../../data/apps.js";
+---
+
+<div class="dock">
+    {
+        apps.map((app) => (
+            <button
+                type="button"
+                class="dock-item"
+                data-open={app.id}
+                title={app.title}
+                aria-label={app.title}
+                set:html={`${app.icon}`}
+            />
+        ))
+    }
+</div>

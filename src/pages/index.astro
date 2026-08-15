@@ -1,24 +1,50 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import NavBar from "../components/NavBar.astro";
-import Hero from "../components/Hero.astro";
-import About from "../components/About.astro";
-import Skills from "../components/Skills.astro";
-import Work from "../components/Work.astro";
-import Experience from "../components/Experience.astro";
-import Achievements from "../components/Achievements.astro";
-import Contact from "../components/Contact.astro";
-import Footer from "../components/Footer.astro";
+import "../styles/desktop.css";
+import { apps } from "../data/apps.js";
+import MenuBar from "../components/desktop/MenuBar.astro";
+import Dock from "../components/desktop/Dock.astro";
+import Spotlight from "../components/desktop/Spotlight.astro";
+import WindowFrame from "../components/desktop/WindowFrame.astro";
+import DesktopScript from "../components/desktop/DesktopScript.astro";
+import MobileView from "../components/MobileView.astro";
+import AboutApp from "../components/apps/AboutApp.astro";
+import SkillsApp from "../components/apps/SkillsApp.astro";
+import WorkApp from "../components/apps/WorkApp.astro";
+import ExperienceApp from "../components/apps/ExperienceApp.astro";
+import AchievementsApp from "../components/apps/AchievementsApp.astro";
+import ResumeApp from "../components/apps/ResumeApp.astro";
+import ContactApp from "../components/apps/ContactApp.astro";
+
+const appComponents = {
+    about: AboutApp,
+    skills: SkillsApp,
+    work: WorkApp,
+    experience: ExperienceApp,
+    achievements: AchievementsApp,
+    resume: ResumeApp,
+    contact: ContactApp,
+};
 ---
 
 <Layout>
-    <NavBar />
-    <Hero />
-    <About />
-    <Skills />
-    <Work />
-    <Experience />
-    <Achievements />
-    <Contact />
-    <Footer />
+    <div class="desktop">
+        <MenuBar />
+        {
+            apps.map((app) => {
+                const Content = appComponents[app.id];
+                return (
+                    <WindowFrame id={app.id} title={app.title}>
+                        <Content />
+                    </WindowFrame>
+                );
+            })
+        }
+        <Dock />
+        <Spotlight />
+    </div>
+
+    <MobileView />
+
+    <DesktopScript />
 </Layout>

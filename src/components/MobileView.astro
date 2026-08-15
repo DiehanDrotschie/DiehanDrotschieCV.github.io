@@ -1,0 +1,64 @@
+---
+import AboutApp from "./apps/AboutApp.astro";
+import SkillsApp from "./apps/SkillsApp.astro";
+import WorkApp from "./apps/WorkApp.astro";
+import ExperienceApp from "./apps/ExperienceApp.astro";
+import AchievementsApp from "./apps/AchievementsApp.astro";
+import ResumeApp from "./apps/ResumeApp.astro";
+import ContactApp from "./apps/ContactApp.astro";
+import Footer from "./Footer.astro";
+
+const base = import.meta.env.BASE_URL;
+---
+
+<div class="mobile-view">
+    <header class="mobile-header">
+        <span class="brand">Diehan Drotschie</span>
+        <a class="btn btn-primary" href={`${base}DiehanCV.pdf`} target="_blank" rel="noreferrer">
+            Download CV
+        </a>
+    </header>
+
+    <section id="about" class="section-tight">
+        <div class="container"><AboutApp /></div>
+    </section>
+    <section id="skills" class="section-tight">
+        <div class="container"><SkillsApp /></div>
+    </section>
+    <section id="work" class="section-tight">
+        <div class="container"><WorkApp /></div>
+    </section>
+    <section id="experience" class="section-tight">
+        <div class="container"><ExperienceApp /></div>
+    </section>
+    <section id="achievements" class="section-tight">
+        <div class="container"><AchievementsApp /></div>
+    </section>
+    <section id="resume" class="section-tight">
+        <div class="container"><ResumeApp /></div>
+    </section>
+    <section id="contact" class="section-tight">
+        <div class="container"><ContactApp /></div>
+    </section>
+
+    <Footer />
+</div>
+
+<style>
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: rgba(247, 243, 238, 0.9);
+        backdrop-filter: blur(10px);
+        z-index: 10;
+    }
+
+    .mobile-header .brand {
+        font-weight: 700;
+    }
+</style>

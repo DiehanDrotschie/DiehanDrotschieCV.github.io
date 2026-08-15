@@ -1,0 +1,30 @@
+---
+import { apps } from "../../data/apps.js";
+---
+
+<div class="spotlight-overlay" id="spotlight-overlay">
+    <div class="spotlight-box">
+        <input
+            type="text"
+            class="spotlight-input"
+            id="spotlight-input"
+            placeholder="Search About, Skills, Portfolio, Resume…"
+            autocomplete="off"
+        />
+        <div class="spotlight-results" id="spotlight-results">
+            {
+                apps.map((app) => (
+                    <button
+                        type="button"
+                        class="spotlight-result"
+                        data-open={app.id}
+                        data-label={app.title.toLowerCase()}
+                    >
+                        <Fragment set:html={app.icon} />
+                        <span>{app.title}</span>
+                    </button>
+                ))
+            }
+        </div>
+    </div>
+</div>

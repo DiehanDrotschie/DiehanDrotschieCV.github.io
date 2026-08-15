@@ -1,0 +1,185 @@
+---
+import { apps } from "../../data/apps.js";
+
+const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
+    id,
+    width,
+    height,
+    openOnLoad: Boolean(openOnLoad),
+}));
+---
+
+<script define:vars={{ appMeta }}>
+    let zIndexCounter = 10;
+    let openOffset = 0;
+
+    function getWindow(id) {
+        return document.querySelector(`.window[data-app="${id}"]`);
+    }
+
+    function focusWindow(win) {
+        zIndexCounter += 1;
+        win.style.zIndex = String(zIndexCounter);
+    }
+
+    function setDockActive(id, active) {
+        document
+            .querySelectorAll(`[data-open="${id}"].dock-item`)
+            .forEach((el) => el.classList.toggle("active", active));
+    }
+
+    function openWindow(id) {
+        const win = getWindow(id);
+        if (!win) return;
+        if (win.style.display !== "flex") {
+            const meta = appMeta.find((a) => a.id === id);
+            const width = meta?.width ?? 560;
+            const height = meta?.height ?? 420;
+            win.style.width = `${width}px`;
+            win.style.height = `${height}px`;
+            const left = Math.max(
+                20,
+                window.innerWidth / 2 - width / 2 + openOffset,
+            );
+            const top = Math.max(60, 90 + openOffset);
+            win.style.left = `${left}px`;
+            win.style.top = `${top}px`;
+            win.style.transform = "none";
+            openOffset = (openOffset + 28) % 140;
+        }
+        win.classList.add("open");
+        win.style.display = "flex";
+        focusWindow(win);
+        setDockActive(id, true);
+    }
+
+    function closeWindow(id) {
+        const win = getWindow(id);
+        if (!win) return;
+        win.classList.remove("open");
+        win.style.display = "none";
+        setDockActive(id, false);
+    }
+
+    function toggleWindow(id) {
+        const win = getWindow(id);
+        if (!win) return;
+        if (win.style.display === "flex") {
+            closeWindow(id);
+        } else {
+            openWindow(id);
+        }
+    }
+
+    // Dock + menu bar open triggers
+    document.querySelectorAll("[data-open]").forEach((el) => {
+        el.addEventListener("click", () => {
+            const id = el.getAttribute("data-open");
+            if (!id) return;
+            if (el.classList.contains("dock-item")) {
+                toggleWindow(id);
+            } else {
+                openWindow(id);
+            }
+            const overlay = document.getElementById("spotlight-overlay");
+            overlay?.classList.remove("open");
+        });
+    });
+
+    // Window close / bring-to-front / dragging
+    document.querySelectorAll(".window").forEach((win) => {
+        const id = win.getAttribute("data-app");
+        const titlebar = win.querySelector(".window-titlebar");
+        const closeBtn = win.querySelector(".window-dot.close");
+
+        win.addEventListener("mousedown", () => focusWindow(win));
+
+        closeBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (id) closeWindow(id);
+        });
+
+        if (titlebar) {
+            let dragging = false;
+            let startX = 0;
+            let startY = 0;
+            let startLeft = 0;
+            let startTop = 0;
+
+            titlebar.addEventListener("mousedown", (e) => {
+                dragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = win.offsetLeft;
+                startTop = win.offsetTop;
+                focusWindow(win);
+                e.preventDefault();
+            });
+
+            window.addEventListener("mousemove", (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const maxLeft = window.innerWidth - 120;
+                const maxTop = window.innerHeight - 60;
+                win.style.left = `${Math.min(Math.max(0, startLeft + dx), maxLeft)}px`;
+                win.style.top = `${Math.min(Math.max(32, startTop + dy), maxTop)}px`;
+            });
+
+            window.addEventListener("mouseup", () => {
+                dragging = false;
+            });
+        }
+    });
+
+    // Spotlight
+    const overlay = document.getElementById("spotlight-overlay");
+    const input = document.getElementById("spotlight-input");
+    const trigger = document.getElementById("spotlight-trigger");
+
+    function openSpotlight() {
+        overlay?.classList.add("open");
+        input?.focus();
+        if (input instanceof HTMLInputElement) input.value = "";
+        filterResults("");
+    }
+
+    function closeSpotlight() {
+        overlay?.classList.remove("open");
+    }
+
+    function filterResults(query) {
+        const q = query.trim().toLowerCase();
+        document.querySelectorAll(".spotlight-result").forEach((el) => {
+            const label = el.getAttribute("data-label") ?? "";
+            el.style.display = label.includes(q) ? "flex" : "none";
+        });
+    }
+
+    trigger?.addEventListener("click", openSpotlight);
+
+    overlay?.addEventListener("click", (e) => {
+        if (e.target === overlay) closeSpotlight();
+    });
+
+    input?.addEventListener("input", (e) => {
+        if (e.target instanceof HTMLInputElement) filterResults(e.target.value);
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            if (overlay?.classList.contains("open")) {
+                closeSpotlight();
+            } else {
+                openSpotlight();
+            }
+        }
+        if (e.key === "Escape") closeSpotlight();
+    });
+
+    // Open default windows on load
+    appMeta
+        .filter((a) => a.openOnLoad)
+        .forEach((a) => openWindow(a.id));
+</script>

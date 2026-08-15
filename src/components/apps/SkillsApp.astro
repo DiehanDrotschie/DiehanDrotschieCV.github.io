@@ -1,0 +1,18 @@
+---
+import { skills } from "../../data/site.js";
+---
+
+<div class="app-content">
+    <h2>Programming Languages</h2>
+    <div class="skills-list">
+        {skills.map((skill) => <span class="chip">{skill}</span>)}
+    </div>
+</div>
+
+<style>
+    .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+</style>
