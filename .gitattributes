@@ -1,0 +1,17 @@
+# Normalize line endings for everything Git detects as text: store as LF in
+# the repo and check out as LF too (eol=lf overrides each machine's local
+# core.autocrlf). Without this, syncing the working tree between machines
+# with different autocrlf settings (e.g. via Syncthing) makes Git think
+# every text file changed on the next `git status`, even when the content
+# is byte-identical — that's what was happening before this file existed.
+* text=auto eol=lf
+
+# Known binary types — never run line-ending/diff text handling on these.
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
