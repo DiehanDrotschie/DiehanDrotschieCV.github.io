@@ -2,32 +2,50 @@
 import { about, hero } from "../../data/site.js";
 
 const base = import.meta.env.BASE_URL;
+
+const factIcons = {
+    Location:
+        '<path d="M12 22s7-7.6 7-12a7 7 0 0 0-14 0c0 4.4 7 12 7 12Z"/><circle cx="12" cy="10" r="3"/>',
+    Role: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    Focus: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+};
 ---
 
 <div class="app-content about-app">
-    <div class="about-hero">
-        <img src={`${base}Photos/pfp.jpg`} alt="Diehan Drotschie" class="about-photo" />
+    <div class="about-hero reveal-rise">
+        <div class="about-photo-frame" id="about-photo-frame">
+            <img src={`${base}Photos/pfp.jpg`} alt="Diehan Drotschie" class="about-photo" />
+        </div>
         <div>
-            <p class="eyebrow">{hero.eyebrow}</p>
-            <h2>{hero.headline}</h2>
+            <div class="about-identity">
+                <h2>Diehan Drotschie</h2>
+                <span class="role-pill">{hero.eyebrow}</span>
+            </div>
+            <p class="about-tagline">{hero.headline}</p>
             <p class="text-secondary">{hero.subhead}</p>
             <div class="about-tags">
-                {hero.tags.map((tag) => <span class="chip">{tag}</span>)}
+                {hero.tags.map((tag) => <span class="chip about-chip">{tag}</span>)}
             </div>
         </div>
     </div>
 
-    <hr />
+    <div class="about-divider"></div>
 
-    <h3>Summary</h3>
-    <p class="text-secondary">{about.summary}</p>
+    <h3 class="reveal-rise">Summary</h3>
+    <p class="text-secondary reveal-rise">{about.summary}</p>
 
     <div class="about-facts">
         {
-            about.facts.map(([label, value]) => (
-                <div>
-                    <p class="text-secondary fact-label">{label}</p>
-                    <p class="fact-value">{value}</p>
+            about.facts.map(([label, value], i) => (
+                <div class="fact-card reveal-rise" style={`--reveal-delay:${i * 80}ms`}>
+                    <span
+                        class="fact-icon"
+                        set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${factIcons[label] ?? factIcons.Focus}</svg>`}
+                    />
+                    <div>
+                        <p class="text-secondary fact-label">{label}</p>
+                        <p class="fact-value">{value}</p>
+                    </div>
                 </div>
             ))
         }
@@ -42,12 +60,68 @@ const base = import.meta.env.BASE_URL;
         flex-wrap: wrap;
     }
 
+    .about-photo-frame {
+        padding: 3px;
+        border-radius: 19px;
+        background: linear-gradient(160deg, #6fb3ff 0%, #2f6bd6 100%);
+        box-shadow: 0 8px 24px rgba(47, 107, 214, 0.25);
+        flex-shrink: 0;
+        transform-style: preserve-3d;
+        transform: perspective(600px) rotateX(0deg) rotateY(0deg);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+        will-change: transform;
+    }
+
+    .about-photo-frame:hover {
+        box-shadow: 0 16px 36px rgba(47, 107, 214, 0.35);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .about-photo-frame {
+            transition: none;
+        }
+    }
+
     .about-photo {
+        display: block;
         width: 120px;
         height: 120px;
         object-fit: cover;
         border-radius: 16px;
-        flex-shrink: 0;
+        border: 2px solid var(--surface);
+    }
+
+    .about-identity {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .about-identity h2 {
+        margin: 0;
+    }
+
+    .role-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.7rem;
+        border-radius: 999px;
+        background: linear-gradient(160deg, #6fb3ff 0%, #2f6bd6 100%);
+        color: white;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .about-tagline {
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        margin: 0 0 0.5rem;
     }
 
     .about-tags {
@@ -57,22 +131,91 @@ const base = import.meta.env.BASE_URL;
         margin-top: 0.75rem;
     }
 
+    .about-chip {
+        background: rgba(47, 107, 214, 0.1);
+        color: #2f6bd6;
+    }
+
+    .about-divider {
+        height: 1px;
+        margin: 1.5rem 0;
+        background: linear-gradient(
+            to right,
+            rgba(47, 107, 214, 0.35),
+            rgba(47, 107, 214, 0.02)
+        );
+    }
+
     .about-facts {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
         margin-top: 1rem;
     }
 
+    .fact-card {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0.9rem;
+        border-radius: 12px;
+        background: rgba(47, 107, 214, 0.06);
+        border: 1px solid rgba(47, 107, 214, 0.12);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+    }
+
+    .fact-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(47, 107, 214, 0.15);
+    }
+
+    .fact-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        background: linear-gradient(160deg, #6fb3ff 0%, #2f6bd6 100%);
+        color: white;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .fact-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
     .fact-label {
         margin: 0;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
 
     .fact-value {
-        margin: 0.15rem 0 0;
+        margin: 0.1rem 0 0;
         font-weight: 600;
     }
 </style>
+
+<script>
+    document.querySelectorAll<HTMLElement>(".about-app").forEach((root) => {
+        const frame = root.querySelector<HTMLElement>(".about-photo-frame");
+        if (!frame || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        const MAX_TILT = 10;
+
+        frame.addEventListener("mousemove", (e) => {
+            const rect = frame.getBoundingClientRect();
+            const px = (e.clientX - rect.left) / rect.width - 0.5;
+            const py = (e.clientY - rect.top) / rect.height - 0.5;
+            frame.style.transform = `perspective(600px) rotateX(${(-py * MAX_TILT).toFixed(2)}deg) rotateY(${(px * MAX_TILT).toFixed(2)}deg) scale(1.03)`;
+        });
+
+        frame.addEventListener("mouseleave", () => {
+            frame.style.transform = "perspective(600px) rotateX(0deg) rotateY(0deg) scale(1)";
+        });
+    });
+</script>

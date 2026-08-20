@@ -32,14 +32,16 @@ const appComponents = {
         <Wallpaper />
         <MenuBar />
         {
-            apps.map((app) => {
-                const Content = appComponents[app.id];
-                return (
-                    <WindowFrame id={app.id} title={app.title}>
-                        <Content />
-                    </WindowFrame>
-                );
-            })
+            apps
+                .filter((app) => !app.links)
+                .map((app) => {
+                    const Content = appComponents[app.id];
+                    return (
+                        <WindowFrame id={app.id} title={app.title}>
+                            <Content />
+                        </WindowFrame>
+                    );
+                })
         }
         <Dock />
         <Spotlight />

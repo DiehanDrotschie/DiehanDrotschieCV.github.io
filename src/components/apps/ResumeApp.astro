@@ -3,18 +3,32 @@ const base = import.meta.env.BASE_URL;
 ---
 
 <div class="app-content resume-app">
-    <div class="resume-header">
-        <h2>Resume</h2>
-        <a class="btn btn-primary" href={`${base}DiehanCV.pdf`} target="_blank" rel="noreferrer">
+    <div class="resume-header reveal-rise">
+        <div class="resume-title">
+            <span
+                class="resume-icon"
+                set:html='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+            />
+            <div>
+                <h2>Resume</h2>
+                <p class="text-secondary resume-subtext">Full CV, current as of today</p>
+            </div>
+        </div>
+        <a class="btn resume-download" href={`${base}DiehanCV.pdf`} target="_blank" rel="noreferrer">
             Download PDF
         </a>
     </div>
-    <iframe
-        src={`${base}DiehanCV.pdf`}
-        title="Diehan Drotschie CV"
-        class="resume-frame"
-        loading="lazy"
-    ></iframe>
+    <div class="resume-frame-wrap reveal-rise" style="--reveal-delay:100ms">
+        <iframe
+            src={`${base}DiehanCV.pdf#toolbar=0&navpanes=0&pagemode=none&view=FitH`}
+            title="Diehan Drotschie CV"
+            class="resume-frame"
+            loading="lazy"
+        ></iframe>
+    </div>
+    <p class="text-secondary resume-fallback-hint">
+        Preview not showing? <a href={`${base}DiehanCV.pdf`} target="_blank" rel="noreferrer">Open the PDF directly</a>.
+    </p>
 </div>
 
 <style>
@@ -27,14 +41,100 @@ const base = import.meta.env.BASE_URL;
         margin-bottom: 1rem;
     }
 
+    .resume-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
     .resume-header h2 {
         margin: 0;
     }
 
-    .resume-frame {
-        width: 100%;
-        height: min(70vh, 720px);
+    .resume-subtext {
+        margin: 0.1rem 0 0;
+        font-size: 0.82rem;
+    }
+
+    .resume-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        border-radius: 11px;
+        background: linear-gradient(160deg, #ff8a80 0%, #e0311a 100%);
+        color: white;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .resume-title:hover .resume-icon {
+        transform: rotate(-6deg) scale(1.06);
+    }
+
+    .resume-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .resume-download {
+        background: linear-gradient(160deg, #ff8a80 0%, #e0311a 100%);
+        color: white;
+        box-shadow: 0 6px 16px rgba(224, 49, 26, 0.3);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+    }
+
+    .resume-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(224, 49, 26, 0.4);
+    }
+
+    /* A fanned stack of "pages" peeking out behind the frame — small nod to a
+       physical CV printout instead of a flat single-sheet preview. */
+    .resume-frame-wrap {
+        position: relative;
+        padding: 3px;
+        border-radius: 14px;
+        background: linear-gradient(160deg, rgba(255, 138, 128, 0.5) 0%, rgba(224, 49, 26, 0.5) 100%);
+    }
+
+    .resume-frame-wrap::before,
+    .resume-frame-wrap::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        z-index: -1;
+    }
+
+    .resume-frame-wrap::before {
+        transform: rotate(-2.5deg) translateY(2px);
+    }
+
+    .resume-frame-wrap::after {
+        transform: rotate(2deg) translateY(1px);
+    }
+
+    .resume-frame {
+        display: block;
+        width: 100%;
+        height: min(78vh, 860px);
+        border: none;
+        border-radius: 11px;
+    }
+
+    .resume-fallback-hint {
+        margin: 0.75rem 0 0;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    .resume-fallback-hint a {
+        color: #e0311a;
+        font-weight: 600;
     }
 </style>

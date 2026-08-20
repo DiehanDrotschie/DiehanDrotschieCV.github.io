@@ -1,18 +1,65 @@
 ---
 import { apps } from "../../data/apps.js";
 
-const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
-    id,
-    width,
-    height,
-    openOnLoad: Boolean(openOnLoad),
-}));
+const appMeta = apps
+    .filter((app) => !app.links)
+    .map(({ id, width, height, openOnLoad }) => ({
+        id,
+        width,
+        height,
+        openOnLoad: Boolean(openOnLoad),
+    }));
 ---
 
 <script define:vars={{ appMeta }}>
     const MOBILE_QUERY = "(max-width: 900px), (pointer: coarse)";
     let zIndexCounter = 10;
     let openOffset = 0;
+    let wasMobile = false;
+
+    const minimizedIds = new Set();
+    const maximizedIds = new Set();
+    const restoreBounds = new Map();
+
+    // Scroll-reveal: every app's content fades/rises into place the first
+    // time it scrolls into view inside its window's scrolling body. One
+    // shared checker for all apps — the pattern (and the reduced-motion
+    // escape hatch) is identical everywhere, so it doesn't belong per-app.
+    //
+    // Deliberately NOT an IntersectionObserver: this environment's sandboxed
+    // Browser pane never composites a frame (the same underlying cause as the
+    // existing animationend/requestAnimationFrame gotchas elsewhere in this
+    // file), so IO callbacks never fire here — confirmed by direct test,
+    // elements sat at opacity 0 forever despite being squarely in the
+    // viewport. Plain `scroll`/`resize` events and direct calls fire
+    // regardless of compositing, so a manual getBoundingClientRect check
+    // driven by those is the robust choice over something that could
+    // silently never reveal content for some visitors.
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function isInView(el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom <= 0 || rect.top >= window.innerHeight) return false;
+        if (rect.right <= 0 || rect.left >= window.innerWidth) return false;
+        // Also respect clipping by the window's own scrolling body — a raw
+        // viewport check alone would reveal content that's actually scrolled
+        // out of sight above/below a window's visible area.
+        const scroller = el.closest(".window-body");
+        if (scroller) {
+            const sRect = scroller.getBoundingClientRect();
+            if (rect.bottom <= sRect.top || rect.top >= sRect.bottom) return false;
+        }
+        return true;
+    }
+
+    function revealVisible() {
+        if (reduceMotion) return;
+        document
+            .querySelectorAll(".reveal:not(.is-visible), .reveal-rise:not(.is-visible)")
+            .forEach((el) => {
+                if (isInView(el)) el.classList.add("is-visible");
+            });
+    }
 
     function isMobile() {
         return window.matchMedia(MOBILE_QUERY).matches;
@@ -20,6 +67,10 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
 
     function getWindow(id) {
         return document.querySelector(`.window[data-app="${id}"]`);
+    }
+
+    function getDockItem(id) {
+        return document.querySelector(`.dock-item[data-open="${id}"]`);
     }
 
     function focusWindow(win) {
@@ -55,9 +106,37 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
         openOffset = (openOffset + 28) % 140;
     }
 
+    // animationend never fires if the animation didn't run (prefers-reduced-motion
+    // sets `animation: none`, or this environment simply never paints a frame) —
+    // race it against a timeout so state transitions always complete.
+    function onAnimationSettled(el, fallbackMs, cb) {
+        let done = false;
+        const finish = () => {
+            if (done) return;
+            done = true;
+            el.removeEventListener("animationend", finish);
+            cb();
+        };
+        el.addEventListener("animationend", finish, { once: true });
+        window.setTimeout(finish, fallbackMs);
+    }
+
+    function clearWindowState(id) {
+        minimizedIds.delete(id);
+        maximizedIds.delete(id);
+        restoreBounds.delete(id);
+        getDockItem(id)?.classList.remove("minimized");
+        getWindow(id)?.classList.remove("maximized", "minimizing", "restoring", "bounds-animating");
+    }
+
     function openWindow(id) {
         const win = getWindow(id);
         if (!win) return;
+
+        if (minimizedIds.has(id)) {
+            restoreMinimized(id);
+            return;
+        }
 
         if (isMobile()) {
             // One window at a time on mobile — keep things simple and full-screen.
@@ -77,6 +156,7 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
         win.style.display = "flex";
         focusWindow(win);
         setDockActive(id, true);
+        revealVisible();
     }
 
     function closeWindow(id) {
@@ -85,16 +165,111 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
         win.classList.remove("open");
         win.style.display = "none";
         setDockActive(id, false);
+        clearWindowState(id);
     }
 
     function toggleWindow(id) {
         const win = getWindow(id);
         if (!win) return;
-        if (win.style.display === "flex") {
+        if (minimizedIds.has(id)) {
+            restoreMinimized(id);
+        } else if (win.style.display === "flex") {
             closeWindow(id);
         } else {
             openWindow(id);
         }
+    }
+
+    function minimizeWindow(id) {
+        const win = getWindow(id);
+        if (!win || win.style.display !== "flex" || minimizedIds.has(id)) return;
+
+        const dockIcon = getDockItem(id)?.querySelector(".dock-icon");
+        const winRect = win.getBoundingClientRect();
+        if (dockIcon) {
+            const dockRect = dockIcon.getBoundingClientRect();
+            const dx = dockRect.left + dockRect.width / 2 - (winRect.left + winRect.width / 2);
+            const dy = dockRect.top + dockRect.height / 2 - (winRect.top + winRect.height / 2);
+            win.style.setProperty("--minimize-dx", `${dx}px`);
+            win.style.setProperty("--minimize-dy", `${dy}px`);
+        }
+
+        minimizedIds.add(id);
+        getDockItem(id)?.classList.add("minimized");
+        win.classList.add("minimizing");
+
+        onAnimationSettled(win, 360, () => {
+            win.classList.remove("minimizing", "open");
+            win.style.display = "none";
+        });
+    }
+
+    function restoreMinimized(id) {
+        const win = getWindow(id);
+        if (!win) return;
+        minimizedIds.delete(id);
+        getDockItem(id)?.classList.remove("minimized");
+        win.style.display = "flex";
+        win.classList.add("open", "restoring");
+        focusWindow(win);
+        setDockActive(id, true);
+        revealVisible();
+        onAnimationSettled(win, 360, () => win.classList.remove("restoring"));
+    }
+
+    function getDesktopBounds() {
+        const menuBar = document.querySelector(".menu-bar");
+        const menuHeight = menuBar ? menuBar.getBoundingClientRect().height : 58;
+        const margin = 14;
+        return {
+            left: margin,
+            top: menuHeight + margin,
+            width: Math.max(320, window.innerWidth - margin * 2),
+            height: Math.max(220, window.innerHeight - menuHeight - margin * 2),
+        };
+    }
+
+    function animateBounds(win, apply) {
+        win.classList.add("bounds-animating");
+        apply();
+        window.setTimeout(() => win.classList.remove("bounds-animating"), 300);
+    }
+
+    function maximizeWindow(id) {
+        const win = getWindow(id);
+        if (!win || isMobile() || win.style.display !== "flex") return;
+
+        if (maximizedIds.has(id)) {
+            const bounds = restoreBounds.get(id);
+            maximizedIds.delete(id);
+            win.classList.remove("maximized");
+            if (bounds) {
+                animateBounds(win, () => {
+                    win.style.left = `${bounds.left}px`;
+                    win.style.top = `${bounds.top}px`;
+                    win.style.width = `${bounds.width}px`;
+                    win.style.height = `${bounds.height}px`;
+                });
+            }
+        } else {
+            restoreBounds.set(id, {
+                left: win.offsetLeft,
+                top: win.offsetTop,
+                width: win.offsetWidth,
+                height: win.offsetHeight,
+            });
+            maximizedIds.add(id);
+            win.classList.add("maximized");
+            const b = getDesktopBounds();
+            animateBounds(win, () => {
+                win.style.left = `${b.left}px`;
+                win.style.top = `${b.top}px`;
+                win.style.width = `${b.width}px`;
+                win.style.height = `${b.height}px`;
+            });
+        }
+        focusWindow(win);
+        revealVisible();
     }
 
     // Dock + menu bar open triggers
@@ -112,17 +287,76 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
         });
     });
 
-    // Window close / bring-to-front / dragging
+    // Contact Links dock flyout — click/tap support so it also works on touch
+    // (which has no hover) and is easy to verify since it doesn't depend on
+    // synthetic pointer hover state.
+    document.querySelectorAll(".dock-item-links").forEach((item) => {
+        const trigger = item.querySelector(".dock-trigger");
+        trigger?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = item.classList.contains("open");
+            document
+                .querySelectorAll(".dock-item-links.open")
+                .forEach((el) => el.classList.remove("open"));
+            item.classList.toggle("open", !isOpen);
+        });
+
+        // Hover, with a debounced close instead of raw CSS :hover. The
+        // flyout sits 14px above the dock icon with nothing rendered in
+        // between (see the `.hover-open` comment in desktop.css) — moving
+        // the cursor from icon to flyout crosses that empty gap, which
+        // means the pointer briefly isn't over the icon OR the flyout and
+        // a plain :hover would snap shut (and go unclickable) right there.
+        // mouseenter/mouseleave on `item` still fire correctly for the gap
+        // crossing (leaving on entering the gap, re-entering on reaching
+        // the flyout, since it's a DOM descendant of `item`); the delay
+        // just gives that crossing time to complete before actually closing.
+        let hoverCloseTimer = null;
+        item.addEventListener("mouseenter", () => {
+            if (hoverCloseTimer) {
+                window.clearTimeout(hoverCloseTimer);
+                hoverCloseTimer = null;
+            }
+            item.classList.add("hover-open");
+        });
+        item.addEventListener("mouseleave", () => {
+            if (hoverCloseTimer) window.clearTimeout(hoverCloseTimer);
+            hoverCloseTimer = window.setTimeout(() => {
+                item.classList.remove("hover-open");
+                hoverCloseTimer = null;
+            }, 250);
+        });
+    });
+
+    document.addEventListener("click", (e) => {
+        document.querySelectorAll(".dock-item-links.open").forEach((item) => {
+            if (!item.contains(e.target)) item.classList.remove("open");
+        });
+    });
+
+    // Window close / minimize / maximize / bring-to-front / dragging / resizing
     document.querySelectorAll(".window").forEach((win) => {
         const id = win.getAttribute("data-app");
         const titlebar = win.querySelector(".window-titlebar");
         const closeBtn = win.querySelector(".window-dot.close");
+        const minimizeBtn = win.querySelector(".window-dot.minimize");
+        const zoomBtn = win.querySelector(".window-dot.zoom");
 
         win.addEventListener("mousedown", () => focusWindow(win));
 
         closeBtn?.addEventListener("click", (e) => {
             e.stopPropagation();
             if (id) closeWindow(id);
+        });
+
+        minimizeBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (id) minimizeWindow(id);
+        });
+
+        zoomBtn?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (id) maximizeWindow(id);
         });
 
         if (titlebar) {
@@ -133,7 +367,7 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
             let startTop = 0;
 
             titlebar.addEventListener("mousedown", (e) => {
-                if (isMobile()) return;
+                if (isMobile() || e.target.closest(".window-dot")) return;
                 dragging = true;
                 startX = e.clientX;
                 startY = e.clientY;
@@ -143,8 +377,29 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
                 e.preventDefault();
             });
 
+            titlebar.addEventListener("dblclick", (e) => {
+                if (isMobile() || e.target.closest(".window-dot")) return;
+                if (id) maximizeWindow(id);
+            });
+
             window.addEventListener("mousemove", (e) => {
                 if (!dragging) return;
+                // Dragging a maximized window un-maximizes it first, like macOS —
+                // restore its pre-maximize size so the drag doesn't start by
+                // dragging the full-desktop-sized window around.
+                if (id && maximizedIds.has(id)) {
+                    maximizedIds.delete(id);
+                    win.classList.remove("maximized", "bounds-animating");
+                    const bounds = restoreBounds.get(id);
+                    const width = bounds?.width ?? win.offsetWidth;
+                    const height = bounds?.height ?? win.offsetHeight;
+                    win.style.width = `${width}px`;
+                    win.style.height = `${height}px`;
+                    startLeft = e.clientX - width / 2;
+                    startTop = 40;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                }
                 const dx = e.clientX - startX;
                 const dy = e.clientY - startY;
                 const maxLeft = window.innerWidth - 120;
@@ -157,16 +412,98 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
                 dragging = false;
             });
         }
+
+        // Resize handles — one generic handler per edge/corner.
+        const MIN_WIDTH = 320;
+        const MIN_HEIGHT = 220;
+        win.querySelectorAll(".resize-handle").forEach((handle) => {
+            const edge = handle.getAttribute("data-edge") ?? "";
+            let resizing = false;
+            let startX = 0;
+            let startY = 0;
+            let startLeft = 0;
+            let startTop = 0;
+            let startWidth = 0;
+            let startHeight = 0;
+
+            handle.addEventListener("mousedown", (e) => {
+                if (isMobile()) return;
+                resizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = win.offsetLeft;
+                startTop = win.offsetTop;
+                startWidth = win.offsetWidth;
+                startHeight = win.offsetHeight;
+                if (id && maximizedIds.has(id)) {
+                    maximizedIds.delete(id);
+                    win.classList.remove("maximized", "bounds-animating");
+                }
+                focusWindow(win);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            window.addEventListener("mousemove", (e) => {
+                if (!resizing) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                let left = startLeft;
+                let top = startTop;
+                let width = startWidth;
+                let height = startHeight;
+
+                if (edge.includes("e")) width = Math.max(MIN_WIDTH, startWidth + dx);
+                if (edge.includes("s")) height = Math.max(MIN_HEIGHT, startHeight + dy);
+                if (edge.includes("w")) {
+                    width = Math.max(MIN_WIDTH, startWidth - dx);
+                    left = startLeft + (startWidth - width);
+                }
+                if (edge.includes("n")) {
+                    height = Math.max(MIN_HEIGHT, startHeight - dy);
+                    top = Math.max(32, startTop + (startHeight - height));
+                }
+
+                win.style.left = `${left}px`;
+                win.style.top = `${top}px`;
+                win.style.width = `${width}px`;
+                win.style.height = `${height}px`;
+            });
+
+            window.addEventListener("mouseup", () => {
+                resizing = false;
+            });
+        });
     });
 
-    // Keep the open window sized correctly across orientation/viewport changes.
+    // Keep windows sized correctly when crossing the mobile/desktop breakpoint,
+    // and keep maximized windows filling the (possibly-resized) desktop area.
+    // Manual drag/resize sizes are left alone otherwise — a plain viewport
+    // resize on desktop shouldn't fight a size the visitor chose deliberately.
+    wasMobile = isMobile();
     window.addEventListener("resize", () => {
-        const openWin = document.querySelector(".window.open");
-        if (!openWin) return;
-        if (isMobile()) {
-            sizeForMobile(openWin);
-        } else {
-            sizeForDesktop(openWin, openWin.getAttribute("data-app"));
+        const nowMobile = isMobile();
+        if (nowMobile !== wasMobile) {
+            document.querySelectorAll(".window.open").forEach((win) => {
+                if (nowMobile) {
+                    sizeForMobile(win);
+                } else {
+                    sizeForDesktop(win, win.getAttribute("data-app"));
+                }
+            });
+            wasMobile = nowMobile;
+            return;
+        }
+        if (!nowMobile) {
+            maximizedIds.forEach((id) => {
+                const win = getWindow(id);
+                if (!win) return;
+                const b = getDesktopBounds();
+                win.style.left = `${b.left}px`;
+                win.style.top = `${b.top}px`;
+                win.style.width = `${b.width}px`;
+                win.style.height = `${b.height}px`;
+            });
         }
     });
 
@@ -213,9 +550,26 @@ const appMeta = apps.map(({ id, width, height, openOnLoad }) => ({
                 openSpotlight();
             }
         }
-        if (e.key === "Escape") closeSpotlight();
+        if (e.key === "Escape") {
+            closeSpotlight();
+            document
+                .querySelectorAll(".dock-item-links.open, .dock-item-links.hover-open")
+                .forEach((el) => el.classList.remove("open", "hover-open"));
+        }
     });
 
     // Open default windows on load
     appMeta.filter((a) => a.openOnLoad).forEach((a) => openWindow(a.id));
+
+    // Wire up scroll-reveal: a scroll inside any window body, or a viewport
+    // resize, can bring new `.reveal`/`.reveal-rise` content into view.
+    // Window open/restore/maximize are covered directly at their call sites
+    // above since those don't dispatch a scroll event on their own.
+    if (!reduceMotion) {
+        document.querySelectorAll(".window-body").forEach((body) => {
+            body.addEventListener("scroll", revealVisible);
+        });
+        window.addEventListener("resize", revealVisible);
+        revealVisible();
+    }
 </script>

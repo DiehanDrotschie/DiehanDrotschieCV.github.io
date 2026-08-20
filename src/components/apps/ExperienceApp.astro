@@ -4,15 +4,183 @@ import { experience } from "../../data/site.js";
 
 <div class="app-content">
     <h2>Experience</h2>
-    {
-        experience.map((item, i) => (
-            <>
-                <h4>{item.role}</h4>
-                <p class="text-secondary">{item.period}</p>
-                <p>{item.description}</p>
-                {item.extra && <p>{item.extra}</p>}
-                {i < experience.length - 1 && <hr />}
-            </>
-        ))
-    }
+    <div class="timeline">
+        {
+            experience.map((item, i) => (
+                <div class="timeline-item">
+                    <div class="timeline-marker">
+                        <span class:list={["timeline-dot", { "timeline-dot-current": item.period.includes("Present") }]} />
+                        {i < experience.length - 1 && <span class="timeline-line" style={`--line-delay:${i * 140}ms`} />}
+                    </div>
+                    <div class="timeline-content reveal-rise" style={`--reveal-delay:${i * 90}ms`}>
+                        <span class="timeline-period">{item.period}</span>
+                        <h4>{item.role}</h4>
+                        <p>{item.description}</p>
+                        {item.extra && (
+                            <div class="timeline-milestone">
+                                <span
+                                    class="milestone-icon"
+                                    set:html='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.6 5.8 21 7 14 2 9.3 9 8.5Z"/></svg>'
+                                />
+                                <div>
+                                    <span class="milestone-label">Latest milestone</span>
+                                    <p>{item.extra}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))
+        }
+    </div>
 </div>
+
+<style>
+    .timeline {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .timeline-item {
+        display: grid;
+        grid-template-columns: 20px 1fr;
+        gap: 1rem;
+    }
+
+    .timeline-marker {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .timeline-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 0.3rem;
+        background: linear-gradient(160deg, #ffb266 0%, #ff7a1a 100%);
+        box-shadow: 0 0 0 4px rgba(255, 122, 26, 0.15);
+    }
+
+    .timeline-dot-current {
+        position: relative;
+        box-shadow: 0 0 0 4px rgba(255, 122, 26, 0.2);
+    }
+
+    .timeline-dot-current::after {
+        content: "";
+        position: absolute;
+        inset: -5px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 122, 26, 0.45);
+        animation: pulse-ring 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(0.8);
+            opacity: 0.9;
+        }
+        100% {
+            transform: scale(1.8);
+            opacity: 0;
+        }
+    }
+
+    .timeline-line {
+        flex: 1;
+        width: 2px;
+        margin-top: 0.3rem;
+        transform-origin: top;
+        background: linear-gradient(
+            to bottom,
+            rgba(255, 122, 26, 0.35),
+            rgba(255, 122, 26, 0.08)
+        );
+        animation: draw-line 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation-delay: var(--line-delay, 0ms);
+    }
+
+    @keyframes draw-line {
+        from {
+            transform: scaleY(0);
+        }
+        to {
+            transform: scaleY(1);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .timeline-line {
+            animation: none;
+        }
+        .timeline-dot-current::after {
+            animation: none;
+            display: none;
+        }
+    }
+
+    .timeline-content {
+        padding-bottom: 1.75rem;
+    }
+
+    .timeline-period {
+        display: inline-flex;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(255, 122, 26, 0.12);
+        color: #c25a00;
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+    }
+
+    .timeline-content h4 {
+        margin-top: 0;
+    }
+
+    .timeline-milestone {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        margin-top: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 10px;
+        background: rgba(255, 122, 26, 0.08);
+        border: 1px solid rgba(255, 122, 26, 0.25);
+    }
+
+    .milestone-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+        border-radius: 8px;
+        background: linear-gradient(160deg, #ffb266 0%, #ff7a1a 100%);
+        color: white;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .milestone-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .milestone-label {
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #c25a00;
+        margin-bottom: 0.3rem;
+    }
+
+    .timeline-milestone p {
+        margin: 0;
+    }
+</style>

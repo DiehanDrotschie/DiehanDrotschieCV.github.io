@@ -41,7 +41,9 @@ looked like "React site wearing a window manager." Second pass fixed this: dark
 night-sky wallpaper (original SVG art, not Apple's actual wallpaper — avoids any IP
 issue while still giving a photographic desktop feel), dark translucent menu bar
 with a keyboard-shortcut hint row, colorful gradient squircle dock icons, glossy 3D
-traffic lights, dark frosted Spotlight overlay.
+traffic lights, dark frosted Spotlight overlay. **Superseded 2026-08-18** — the
+night-sky SVG wallpaper was replaced by an actual photo; see "Wallpaper: Bliss-style
+photo" below.
 
 Third pass: unified mobile and desktop into **one responsive shell** instead of two
 separate DOM trees (see "Mobile / responsive behavior" below) — the user wanted
@@ -151,18 +153,695 @@ logic, and there's no shared source for the breakpoint value.
   an earlier version rendered the component twice (desktop + a separate mobile
   view); that duplication is gone now, but the scoped-query pattern was left as-is
   since it's harmless and still correct — no need to "fix" it back to global ids.
-- Traffic-light window buttons: only the red (close) one is currently functional;
-  yellow/green are decorative. If asked to add minimize/maximize, that's net-new
-  work, not a bug.
+- **Traffic-light window buttons are all functional now (2026-08-17)**: red
+  closes, yellow minimizes (shrinks toward its dock icon, `minimize-out`/`-in`
+  keyframes in `desktop.css`, driven by `minimizeWindow`/`restoreMinimized` in
+  `DesktopScript.astro`), green maximizes/restores (`maximizeWindow`, fills the
+  desktop area below the menu bar). Double-clicking the titlebar also maximizes.
+  Windows are also resizable from any edge/corner via the 8 `.resize-handle`
+  elements added in `WindowFrame.astro` — desktop-pointer only, hidden and
+  disabled on mobile (`isMobile()` guards + `display:none` in the mobile media
+  query), min size 320×220. Dragging or resizing a maximized window un-maximizes
+  it first, matching real macOS behavior.
+  **Gotcha if you touch this again**: minimize/restore originally completed the
+  state change (`display:none`, class cleanup) only inside an `animationend`
+  listener. That silently breaks under `prefers-reduced-motion` (which sets
+  `animation: none`, so the event never fires) and also never fired in this
+  sandboxed Browser pane during testing (same root cause as the existing
+  transition-verification gotcha above — no compositor ticks). Fixed via
+  `onAnimationSettled()`, which races `animationend` against a `setTimeout`
+  fallback. Don't reintroduce a bare `animationend`-only completion for any
+  future window-state animation — always pair it with a timeout fallback.
+- The viewport `resize` listener used to only resize `document.querySelector(".window.open")`
+  (first match only) on every resize, which would have mis-sized every open
+  window but the first once more than one could be open simultaneously. Now it
+  only reflows windows when crossing the mobile/desktop breakpoint (reflowing
+  *all* open windows at that point), and otherwise only re-fits windows that are
+  currently maximized — a manually-resized window's size is left alone on a
+  plain viewport resize, since fighting a size the visitor chose would be worse
+  than leaving it.
+
+## Per-app visual identity (started 2026-08-17)
+
+The user wants each dock app's window content to look distinct/interesting instead
+of all being plain text lists — asked for 1-2 apps done first as a pattern to build
+off, rather than a spec for all of them upfront.
+
+**Established pattern**: each app's content styling echoes that app's own dock
+gradient color (defined in `apps.js`) via a scoped `<style>` block in its
+`*App.astro` file — so the app "feels" like its icon instead of every window
+looking like the same frosted-glass text box. Two apps done so far:
+
+- **ExperienceApp.astro**: vertical timeline — gradient dot + connecting line per
+  role (orange, matching the Experience dock icon), period shown as a pill/chip,
+  the most recent role's `extra` field rendered as a highlighted "Latest milestone"
+  callout box instead of a plain trailing paragraph.
+- **AchievementsApp.astro**: category cards (Academic/Culture/Sports) got a small
+  gradient icon badge (gold, matching the Achievements dock icon) in the header and
+  bullet-dot list items instead of plain `- text` lines; the university marks table
+  got color-coded pill badges per mark (gold ≥90 with a ★, teal 80-89, blue 70-79,
+  grey <70) instead of plain numbers. The ≥90 tier was originally a flat mustard
+  yellow — user asked for something more "gold" specifically, so it's now a
+  metallic gold gradient badge (cream→gold→bronze, dark brown text, inset
+  highlight) with a star glyph, not just a darker yellow.
+- **AboutApp.astro**: photo got a gradient ring frame (blue, matching the About
+  dock icon), tags recolored blue, the `<hr>` divider became a fading gradient
+  line, and the facts grid (Nationality/Age/Sex) became icon-badge cards instead
+  of plain label/value pairs.
+- **SkillsApp.astro** ("could go further" — done): the flat chip list is now
+  grouped into three sections (Languages / Frameworks & Tools / Cloud) via a
+  keyword-based partition of the same `skills` array in `site.js` (no data
+  changes), each skill rendered as a tile with a 2-letter glyph badge in the dark
+  gradient matching the Skills dock icon.
+- **WorkApp.astro**: project cards got a cyan top accent bar (matching the
+  Portfolio dock icon) and the "N images" caption became a small floating badge
+  on the thumbnail instead of a text line — gallery/lightbox behavior unchanged.
+- **ResumeApp.astro**: header now has an icon badge + subtext, the download
+  button and the iframe's border frame both use the red gradient matching the
+  Resume dock icon.
+- **ContactApp.astro / split into two, 2026-08-17**: the window now shows just
+  the heading/subtext and a single "Email Me" CTA (green, matching its dock
+  icon). The LinkedIn/Email row-links that used to live here moved out into a
+  **new dock-only item, `contact-links`** (see below) — the window no longer
+  needs to carry every channel since the dock icon does that job now.
+
+### Contact Links dock flyout (added 2026-08-17)
+
+New `apps.js` entry `{ id: "contact-links", links: true, ... }` — a dock icon
+that is **not a window**. `apps.js`'s `links: true` flag is a general escape
+hatch for "dock icon with no window"; `index.astro`, `Spotlight.astro`, and
+`DesktopScript.astro`'s `appMeta` all filter out `app.links` entries so nothing
+tries to open/search for a nonexistent window.
+
+`Dock.astro` special-cases `app.links` entries: instead of the normal button, it
+renders a `.dock-item-links` wrapper containing a `.dock-trigger` button (the
+icon) and a `.dock-flyout` popover listing LinkedIn / GitHub / Email / Call,
+built from `contact.linkedin` / `contact.github` / `contact.email` /
+`contact.phone` in `site.js` — **entries with an empty value are filtered out
+automatically**, so the flyout only ever shows links that actually exist.
+
+**`contact.github` and `contact.phone` are currently empty strings in
+`site.js` — the user still needs to supply their actual GitHub profile URL and
+phone number.** Once filled in, GitHub and Call will appear in the flyout with
+no other code changes needed.
+
+The flyout opens two ways, both wired in `DesktopScript.astro`:
+- **Hover / focus** (desktop, keyboard) via pure CSS (`:hover`/`:focus-within`
+  in `desktop.css`).
+- **Click/tap** toggles a `.open` class (same CSS rule also keys off `.open`) —
+  this exists specifically so it also works on **touch**, since touch devices
+  have no hover state at all (same limitation already noted for the dock
+  tooltips). A document-level click listener closes it when clicking outside,
+  and Escape closes it alongside Spotlight.
+
+On mobile the flyout repositions to open to the *left* of the dock's vertical
+rail instead of *above* it, mirroring how the existing dock-label tooltip
+already flips sides in the `@media (max-width: 900px), (pointer: coarse)`
+block — kept in sync in the same media query in `desktop.css`.
+
+**A note on verifying this in this environment**: when testing the hover/open
+state via the Browser pane tooling here, `getComputedStyle().opacity` can read
+back as stuck at the transition's *start* value indefinitely even though the
+matching CSS rule is 100% correctly applied (confirmed via `element.matches()`
+and direct stylesheet inspection) — `element.getAnimations()` shows the
+transition frozen at `currentTime: 0`. This happens because the Browser pane
+tab isn't actively compositing frames in this sandboxed environment (the same
+underlying cause as the screenshot tool getting stuck, see the existing gotcha
+above) — CSS transitions need paint ticks to advance, and this tab wasn't
+getting them. `pointer-events` (not animatable, applies as a discrete flip)
+*did* update correctly, which is what proved the rule was applying. If this
+happens again: check `pointer-events` or another non-animated property in the
+same rule instead of trusting `opacity`/`transform` reads for verification, or
+just trust static CSSOM/selector analysis over live computed-style reads for
+transition-based show/hide effects here.
+
+**Still plain / candidates for the same treatment**: none of the seven window
+apps remain untouched now — if asked to keep iterating, look for a next layer
+(e.g. micro-interactions/animations on open, richer Work gallery captions,
+Spotlight result styling) rather than a first pass on an app.
+
+## Impeccable design skill (adopted 2026-08-17)
+
+The repo now uses the `impeccable` design skill (see `~/.claude/skills/impeccable`)
+for design work. `PRODUCT.md` at the repo root was written via `/impeccable init` —
+it's the durable product-truth record (users, positioning, constraints, brand
+commitments) that skill reads before doing design work; keep it in sync the same
+way as this file when product facts change. There is no `DESIGN.md` yet (no
+`/impeccable document` run) — the incumbent code/CSS is still treated as the
+design authority per the skill's rules.
+
+**Craft-floor pass across all seven apps (2026-08-17)**: applied the skill's
+"refuse" list (no eyebrows/kickers, no colored `border-left` callouts, no same-size
+icon+heading+list card repetition) plus typography/motion/browser-surface craft on
+top of the per-app identity pass above:
+- **Typography**: self-hosted `@fontsource-variable/outfit` (installed via npm, no
+  Google Fonts `<link>`) now drives all headings/display text via `--font-display`
+  in `global.css`, imported once in `Layout.astro`. Body copy stays on the
+  `system-ui` stack (`--font-body`) for contrast between display and body voice —
+  don't add a second webfont without a reason, one display face is the point.
+- **Eyebrow removed**: `AboutApp.astro`'s old `.eyebrow` label above the headline
+  (a banned pattern per the skill's craft floor) became a name heading
+  ("Diehan Drotschie", not shown anywhere before this) + a `.role-pill` badge
+  ("Software Developer") next to it. The `.eyebrow` utility class was deleted from
+  `global.css` since nothing else used it — don't re-add a kicker/eyebrow pattern.
+- **Colored border-left removed**: `ExperienceApp.astro`'s "Latest milestone"
+  callout had a `border-left: 3px solid` (a banned "side-tab" pattern, also flagged
+  by `node .claude/skills/impeccable/scripts/detect.mjs`) — now a full 1px border
+  plus a small icon badge instead.
+- **Achievements restructured**: was three identical icon+heading+list cards
+  (Academic/Culture/Sports side by side) — the detector-adjacent "same-size card
+  repetition" pattern. Now Academic is a wider hero card (`.trophy-hero`, `1.3fr`)
+  featuring the real 94.57% average as a large stat, and Culture+Sports share one
+  narrower card as two sections split by a divider instead of two separate cards.
+  Collapses to one column under 640px.
+- **Work portfolio grid**: the project with the most images (currently Instagram
+  Clone, computed via `projects.reduce` in `WorkApp.astro` — not hardcoded, so it
+  re-picks automatically if `site.js` changes) now spans both grid columns as a
+  featured card. The cyan `::before` top accent bar (flagged by the detector as a
+  "side-tab" slop pattern) was removed in favor of a tinted border that
+  brightens on hover; gallery lightbox restyled from flat black to the same dark
+  frosted-glass treatment used elsewhere (Spotlight, dock flyout) instead of being
+  visually disconnected from the rest of the shell.
+- **Motion**: windows now play a single 320ms scale/blur/fade-in
+  (`@keyframes window-in` in `desktop.css`) on open — the one authored motion
+  moment for the whole shell, respecting `prefers-reduced-motion`. Don't add
+  per-app entrance animations on top of this; it's deliberately one moment, not
+  scattered effects.
+- **Browser surfaces**: themed `::selection`, `:focus-visible` rings, and a thin
+  custom scrollbar on `.window-body` (global.css / desktop.css) — previously all
+  browser defaults, which the skill flags as the cheapest tell that a page wasn't
+  fully designed.
+- **Tabular numerals**: `font-variant-numeric: tabular-nums` added to `table` in
+  `global.css` (inherited into the marks-table badges) and the menu bar clock.
+
+Ran `node .claude/skills/impeccable/scripts/detect.mjs --json <path>` after this
+pass — the only remaining finding is a `broken-image` warning on `WorkApp.astro`'s
+`<img class="gallery-image" src="">`, which is an intentional empty placeholder
+the lightbox script fills in on open, not a real bug.
+
+## Creative pass — bolder per-app motion/layout (2026-08-17)
+
+After the craft-floor pass above, the user explicitly asked to go further: "allowed
+to completely change the layout and add animations... make it pop out more" plus
+"more unique and creative", and separately asked for full window resize/minimize/
+maximize. Distinct from the craft-floor pass (which was conservative/refinement-only),
+this round leaned into signature interactions per app:
+
+- **AboutApp.astro**: the photo frame now does a live mouse-tilt (3D `perspective`/
+  `rotateX`/`rotateY` driven by pointer position, scoped `<script>` at the bottom of
+  the file) instead of being static — reset on `mouseleave`, skipped entirely under
+  `prefers-reduced-motion`.
+- **SkillsApp.astro**: tiles within a group now sit at a staggered rhythm
+  (`--stagger` CSS var, `i % 3 * 6px`) instead of a flat single-baseline row, glyphs
+  are circular and rotate slightly on tile hover, group titles got a colored
+  `.skill-group-rule` gradient line instead of sitting bare.
+- **ExperienceApp.astro**: the connecting line between timeline dots now "draws
+  itself" in on window open (`scaleY` keyframe, staggered per item via
+  `--line-delay`), and whichever role's period contains "Present" gets a pulsing
+  ring on its dot (`.timeline-dot-current`) — driven by the real data, not a
+  hardcoded index, so it moves automatically if a new role is added later.
+- **WorkApp.astro**: project cards do the same mouse-tilt as the About photo
+  (separate copy of the same technique in the card's own script block, not a
+  shared util — there's no shared JS module in this project yet, and duplicating
+  ~10 lines twice didn't justify introducing one).
+- **AchievementsApp.astro**: the 94.57% stat now counts up from 0 the first time
+  it scrolls into view (`IntersectionObserver` + `requestAnimationFrame`, real
+  value stored in `data-count-to`/`data-suffix`, not re-typed in the animation).
+  **Robustness note**: the count-up settle step has a `setTimeout` fallback
+  alongside the `rAF` loop — don't remove it. rAF/IntersectionObserver can stall
+  indefinitely (throttled/backgrounded tabs; this was actually observed while
+  testing in this sandboxed Browser pane, which never ticks compositor frames at
+  all — see the existing transition-verification gotcha above) and without the
+  fallback the real number would stay stuck at "0%" for that visitor.
+- **ResumeApp.astro**: `.resume-frame-wrap` grew two rotated `::before`/`::after`
+  pseudo-elements behind it — a small fanned "stack of pages" look instead of a
+  single flat sheet. Icon and download button got spring-style hover lifts.
+- **ContactApp.astro**: the email CTA got a soft pulsing radial-gradient glow
+  behind it (`.contact-cta-glow`, `cta-pulse` keyframe) — an invitation cue, not
+  just a static button.
+- **Shared hover language**: dock icons, project/skill/fact cards etc. all use
+  `cubic-bezier(0.16, 1, 0.3, 1)` (smooth ease-out-expo, same curve as the
+  window-open animation) for their lift/scale transitions — **not** an overshoot
+  "spring" curve like `cubic-bezier(0.34, 1.56, 0.64, 1)`. That was tried first and
+  reverted: `node .claude/skills/impeccable/scripts/detect.mjs` flags overshoot/
+  elastic easing as a `bounce-easing` slop pattern ("feel dated and tacky"). Don't
+  reintroduce bounce/elastic easing on hover/entrance transitions in this repo.
+
+## Window manager — resize, minimize, maximize (2026-08-17)
+
+All three traffic-light dots are now functional (previously only close worked —
+see the old gotcha this replaced). Everything lives in `DesktopScript.astro` +
+`desktop.css` + the 8 `.resize-handle` elements added to `WindowFrame.astro`:
+
+- **Resize**: drag any of the 8 edge/corner handles (desktop-pointer only, hidden
+  via `display:none` in the mobile media query, min size 320×220). The handler is
+  generic — one function keyed by a `data-edge` string like `"se"`/`"n"`/`"w"` —
+  not eight copy-pasted handlers.
+- **Minimize** (yellow): shrinks toward its dock icon and hides
+  (`minimizeWindow`/`restoreMinimized`, `minimize-out`/`minimize-in` keyframes).
+  Clicking the dock icon again restores it from wherever it was left, rather than
+  re-opening fresh.
+- **Maximize** (green): toggles between custom bounds and filling the desktop area
+  below the menu bar (`maximizeWindow`, `getDesktopBounds()`). Double-clicking the
+  titlebar does the same thing. Dragging or resizing a maximized window
+  un-maximizes it first (matches real macOS) — see the `maximizedIds.has(id)`
+  checks in the drag/resize mousemove handlers.
+- **Gotcha if you touch this again**: state-completing logic (minimize/restore)
+  originally lived only inside an `animationend` listener. That's fragile —
+  `prefers-reduced-motion` sets `animation: none` so the event never fires, and it
+  also never fired in this sandboxed Browser pane during testing (confirmed via a
+  direct test: `requestAnimationFrame` never ticks here either — the pane never
+  composites a frame, a stronger version of the existing transition-verification
+  gotcha above). Fixed with `onAnimationSettled()`, which races `animationend`
+  against a `setTimeout` fallback. Any future window-state animation should use
+  this helper (or the same race pattern) instead of a bare `animationend` listener.
+- The viewport `resize` listener used to resize only
+  `document.querySelector(".window.open")` (first match only) on every resize —
+  wrong once more than one window could be open. Now it only reflows *all* open
+  windows when the mobile/desktop breakpoint is actually crossed, and otherwise
+  only re-fits windows that are currently maximized; a manually-resized window's
+  size is left alone on a plain viewport resize.
+
+## Scroll-reveal system (added 2026-08-18)
+
+User asked to go through every app with the `ui-ux-pro-max` design skill and add
+"more life to it as you scroll through it." Added a shared scroll-reveal primitive
+used across all seven window apps instead of a bespoke animation per app:
+
+- **CSS** (`global.css`): `.reveal` (opacity-only fade) and `.reveal-rise`
+  (opacity + `translateY(18px)→none`) utility classes, toggled by a JS-added
+  `.is-visible` class, both with a `--reveal-delay` custom property for stagger
+  and a `prefers-reduced-motion` override that forces them fully visible with no
+  transition. `.reveal` (opacity-only) exists specifically for elements that
+  already own their resting `transform` — e.g. `SkillsApp.astro`'s `.skill-tile`
+  uses `transform: translateY(var(--stagger))` for its baseline stagger offset;
+  a reveal rule that also touched `transform` would win on `.is-visible` and
+  wipe that positioning out. Everything else uses `.reveal-rise`.
+- **JS** (`DesktopScript.astro`): a `revealVisible()` helper (paired `isInView()`
+  check) that adds `.is-visible` to any un-revealed `.reveal`/`.reveal-rise`
+  element whose `getBoundingClientRect()` overlaps both the viewport and its
+  closest `.window-body` ancestor's clip rect (so content scrolled out of a
+  window's own visible area isn't counted as "in view" just because its raw
+  coordinates happen to overlap the browser viewport).
+  **Gotcha if you touch this**: this is deliberately plain `scroll`/`resize`
+  listeners + direct calls, **not an `IntersectionObserver`**. IO was tried
+  first and reverted — confirmed via direct test that in this sandboxed Browser
+  pane, elements sat at `opacity: 0` forever despite being squarely inside the
+  viewport, because the pane never composites a frame (same root cause as the
+  existing `animationend`/`requestAnimationFrame` gotchas elsewhere in this
+  file). `revealVisible()` is called directly from `openWindow()`,
+  `restoreMinimized()`, and `maximizeWindow()` (none of those fire a `scroll`
+  event on their own but can bring new content into view), plus wired to every
+  `.window-body`'s `scroll` event and the window's `resize` event. Don't
+  reintroduce IntersectionObserver for this without also keeping a manual
+  fallback — it's unverifiable in this environment and the existing project
+  convention (count-up stat, minimize/restore) already treats compositor/rAF-
+  driven callbacks as unreliable enough to need a non-rAF fallback.
+- **Applied per app**: `AboutApp` (hero block, Summary heading/paragraph, fact
+  cards staggered), `SkillsApp` (each group heading + tile, tiles staggered
+  45ms apart), `WorkApp` (project cards staggered 70ms apart), `ExperienceApp`
+  (each timeline entry's content block staggered 90ms apart, independent of the
+  existing line-draw/pulse animations which stay tied to window-open, not
+  scroll), `AchievementsApp` (the academic hero card, the culture/sports card,
+  and the university-education card, staggered), `ResumeApp` (header, then the
+  framed PDF preview), `ContactApp` (hero, CTA, and the dock-flyout hint,
+  staggered). Verified via direct JS in the Browser pane (dispatching a
+  synthetic `scroll` event on each `.window-body` and checking `.is-visible`
+  counts before/after) rather than screenshots, since this pane doesn't
+  composite frames — see the existing screenshot-tool gotcha above.
+
+## Wallpaper: Bliss-style photo (2026-08-18)
+
+User asked to swap the desktop background for something like the Windows XP
+"Bliss" wallpaper. The real Bliss photo is a licensed Getty Images stock photo
+(Charles O'Rear) — not free to use — so instead of that exact image, a free-license
+lookalike was sourced from Unsplash and downloaded to
+`public/Photos/wallpaper-hills.jpg` (2400×1600, ~800KB):
+
+- **"Rolling green hills under a blue sky with clouds"** by Bell C.
+  (`@bchen22`), shot in Washington, USA, published 2025-08-24.
+  Source: https://unsplash.com/photos/x9YqzbKd8hU
+  License: [Unsplash License](https://unsplash.com/license) — free for commercial
+  and non-commercial use, no permission required, attribution appreciated but not
+  required. If this ever needs re-sourcing, that's the license standard to match.
+
+`Wallpaper.astro` went from a hand-drawn dark night-sky SVG to `<img
+src=".../Photos/wallpaper-hills.jpg">` with `object-fit: cover`, plus a subtle
+top/bottom-only `linear-gradient` scrim (not a full-image dim) so the menu bar and
+dock text stay legible against whatever part of the photo sits behind them. The
+menu bar/dock/window frosted-glass styling (`rgba(10-20, ..., 0.35-0.55)` +
+`backdrop-filter: blur`) needed **no changes** — dark vibrancy panels are designed
+to read on top of any wallpaper, bright or dark, which is why this was a
+drop-in background swap rather than a full shell restyle. `.desktop`'s fallback
+background color (`#0b1a2e`, shown briefly before the photo loads) was left as-is.
+
+## Dock icon redesign (2026-08-18)
+
+User asked for "Apple/Mac specific icons instead of these" (the previous abstract
+outline glyphs). Actually reproducing Apple's real app icons (Finder, Mail, Photos,
+etc.) wasn't done — those are Apple's trademarked/copyrighted designs, the same
+"don't source from the real thing" boundary this repo already holds for the
+wallpaper/theme (see the top of this file). Instead, `src/data/apps.js`'s icon
+glyphs were redrawn as original artwork that **evokes** a specific kind of macOS
+app per window, so the dock reads as more authentically "Mac-like" without any
+trademark risk:
+
+- **About** → Contacts-style ID card (rounded card, portrait circle, shoulders)
+- **Skills** → Terminal-style window (chevron prompt + cursor line)
+- **Portfolio** → Photos-style frame (sun + mountain skyline)
+- **Experience** → Calendar-style grid (binder rings + date dots)
+- **Achievements** → Game Center-style medal (rosette + star)
+- **Resume** → Pages-style document (folded corner + text lines)
+- **Contact** → Mail-style envelope (unchanged, already fit)
+- **Contact Links** (dock flyout trigger) → address-book style (spine tabs +
+  entry lines)
+
+All icons are still generated through the same `icon(paths, viewBox)` helper at
+the top of `apps.js` and rendered via `Dock.astro`/`Spotlight.astro`, which read
+`app.icon` directly — no changes needed there. If you touch these again, keep new
+glyphs in this "generic app-genre" register (terminal, calendar, contacts card,
+photo frame, medal, document, envelope, address book) rather than tracing any
+specific real Apple icon.
+
+## Wallpaper fill fix + Liquid Glass shell restyle (2026-08-18)
+
+**Fill bug**: user reported a visible flat-color gap below the wallpaper photo
+on their screen. Root cause: `.desktop` was `position: fixed; inset: 0;` with no
+explicit size — that's normally equivalent to full-viewport, but on mobile
+browsers whose chrome (URL bar) shows/hides, fixed elements are sized to the
+*initial* viewport and don't grow when the chrome collapses, leaving a gap that
+shows `.desktop`'s fallback navy background through. Fixed by adding explicit
+`width: 100vw; height: 100vh; height: 100dvh;` to `.desktop` (dvh cascades over
+the vh fallback in browsers that support it) — belt-and-suspenders alongside
+`inset: 0`, verified filling exactly to `window.innerWidth`/`innerHeight` at both
+desktop (1280×800) and mobile (375×812) viewport sizes via direct JS
+`getBoundingClientRect()` checks in the Browser pane.
+
+**Liquid Glass restyle**: user asked for the shell chrome to follow Apple's newer
+"Liquid Glass" material (WWDC 2025 / macOS Tahoe, iOS 26) instead of the flatter
+dark-frosted look from earlier passes. Per real Apple behavior — and the
+`ui-ux-pro-max` skill's own `liquid-glass` style entry ("Best For: navigation,
+controls, and system-aligned app chrome") — this targets the **surrounding
+chrome** (menu bar, dock, tooltips, flyouts), not the app icons' own brand
+colors, which stay colorful/opaque under real Liquid Glass too. Changes in
+`desktop.css`:
+- `.menu-bar` and `.dock`: background is now a layered `linear-gradient` top-lit
+  highlight over a thinner dark tint (was a flat `rgba(...)` tint), with much
+  heavier `backdrop-filter: blur(34-38px) saturate(2.1-2.2)` (was
+  `blur(20-24px) saturate(1.4-1.6)`) so they visibly sample/refract the
+  wallpaper behind them, plus an `inset` top hairline highlight for a lit-glass
+  edge instead of a flat panel.
+- `.dock` border-radius went from 20px to 28px, pushing it toward the
+  fully-rounded floating-pill shape Liquid Glass uses for the real macOS Dock.
+- `.dock-icon` (and `.spotlight-result-icon`, same glyphs elsewhere) gained a
+  `::after` diagonal white-to-transparent sheen overlay — the icon's own
+  gradient background is unchanged, this just adds the same lit-glass surface
+  language the chrome now has. Needed `position: relative; overflow: hidden`
+  on the icon and `position: relative; z-index: 1` on its `<svg>` so the sheen
+  clips to the icon's rounded corners without covering the glyph.
+- `.dock-label` (hover tooltip) and `.dock-flyout` (Contact Links popover) got
+  the same blur/gradient/border treatment for consistency with the dock they
+  hang off.
+- Added a `@media (prefers-reduced-transparency: reduce)` fallback (still
+  WebKit-led browser support, so treat as progressive enhancement, not the
+  primary a11y path) that swaps all of the above to solid opaque panels with
+  `backdrop-filter: none`.
+- Window chrome (titlebar, traffic lights, window body) was **not** touched —
+  the user's ask was scoped to icons + top bar + bottom bar; window styling is
+  a separate System Settings-style whites/frosted-light material in real macOS
+  anyway, not the same Liquid Glass surface as nav chrome.
+
+## Skills content expansion (2026-08-18)
+
+Started with just adding `n8n` as a skill, then the user confirmed a much larger
+batch of real skills to add after being asked for recommendations. `skills` in
+`site.js` went from 13 flat entries to 31, and `SkillsApp.astro` now has **five**
+grouping buckets instead of three (each still a plain keyword `Set` filtered
+against the flat array — same pattern throughout, just more sets):
+
+- **Languages** (unchanged pool minus what moved out): Java, C, Python, HTML,
+  CSS, R, Delphi, C#
+- **Frameworks & Tools** (`tools` Set) — gained `.NET`, `Blazor`, `PostgreSQL`
+  (replaced the old generic `SQL` entry — user's actual DB experience is
+  specifically Postgres), `REST APIs`, `Docker`, `Git`, `NUnit` (their actual
+  testing framework — don't swap this for Jest/xUnit if asked to "add testing"
+  again, this is the confirmed one) alongside the pre-existing Dart+Firebase/
+  PIXI.js/Svelte.
+- **Cloud (AWS)** (`cloud` Set) — the old single generic `"AWS"` entry was
+  **replaced** with 8 specific services the user actually named: API Gateway,
+  Cognito, Step Functions, Lambda, S3, EC2, DynamoDB, Bedrock (all prefixed
+  `AWS ...` for clarity outside the group's visual context, e.g. in Spotlight
+  search). If more AWS services come up, add them here individually rather
+  than re-collapsing back to one generic "AWS" chip — that was the whole point
+  of this change.
+- **Automation** (`automation` Set): `n8n` — unchanged from the previous entry
+  above, kept as its own bucket in case Zapier/Make etc. get added later.
+- **Agile & Collaboration** (`collaboration` Set, new) — new indigo accent
+  (`#a5b4fc → #4f46e5`, distinct from all other group/app accents in the
+  site): `Agile`, `Jira`, `Confluence`, `CI/CD`. `CI/CD` is deliberately
+  **not** named after a specific tool (GitHub Actions/Azure DevOps) — the user
+  confirmed the category but never named which specific tool, so don't
+  sharpen it to a specific product name without asking.
+
+**Explicitly declined**: Terraform / IaC — user does not use it, don't add it
+back if "recommendations" come up again in a future session.
+
+**Descriptive copy**: the user also asked for the Skills app to read like it'd
+matter on a CV rather than a bare tag cloud. Added a `skills-intro` paragraph
+under the `<h2>` (renamed from "Programming Languages" to plain "Skills" since
+it now covers far more than languages) plus one `group.description` sentence
+per bucket, rendered as `.skill-group-desc` right under each group's title/rule
+— e.g. Cloud's reads "AWS services used day-to-day to design, deploy, and scale
+backend game services." Keep new groups following this same pattern (one
+sentence of real context, not filler) rather than reverting to bare chip lists.
+
+`CONTENT.md`'s Skills section was restructured to mirror these same five
+groups (was previously one flat bullet list under "Skills (Programming
+Languages)") — keep the two in sync per this repo's standing convention.
+
+**Alignment fix (same day)**: the "Creative pass" session (see above) had given
+`.skill-tile` a `--stagger` custom property (`(i % 3) * 6px` on `translateY`) for
+a staggered, non-flat baseline. The user found this actively bothered them once
+the group grew to 31 tiles — removed the `--stagger` var entirely from both the
+template and `.skill-tile`'s base/hover CSS, so all tiles in a row now share one
+flat baseline (`align-items: stretch` on `.skills-grid`, hover is a plain
+`translateY(-4px) scale(1.04)` with no stagger offset baked in). Since the tile
+no longer owns a resting `transform`, it was switched from `.reveal` (opacity-
+only) to `.reveal-rise` (fade + rise) for its scroll-reveal — see the "Scroll-
+reveal system" entry above for why that distinction exists. Don't reintroduce a
+per-tile baseline offset here without checking back with the user first — this
+was a deliberate reversal of an earlier design choice, not an oversight.
+
+**Language/framework split (same day)**: the merged tiles `"Dart + Firebase"`
+and `"JavaScript/TypeScript + PIXI.js"` were split into their real underlying
+skills at the user's request: **Languages** gained `JavaScript`, `TypeScript`,
+`Dart` (and `Svelte`, moved out of `tools` into the Languages bucket by simply
+removing it from the `tools` Set — note this means Svelte is filed as a
+"language" here even though it's technically a framework; that's the user's
+explicit call, not an oversight). **Frameworks & Tools** gained `Flutter`
+(Dart's framework), `React`, `PixiJS` (split out of the old merged label), and
+`Firebase` (split out, kept here rather than under Cloud since that group is
+scoped to AWS specifically). The Cloud group's description was also trimmed
+from "...scale backend **game** services" to "...scale backend services" — the
+user wanted it framed more generally, not game-specific. The `skills-intro`
+paragraph had its trailing clause ("so it's easy to see where the hands-on
+depth actually is, rather than one flat list of tags") removed — it now just
+reads "grouped by area." Keep it that short if asked to touch this copy again.
+
+**Small follow-up additions (same day)**: `AWS SNS` and `AWS SQS` added to the
+Cloud group, `Postman` added to Frameworks & Tools. Two things the user
+explicitly declined when asked for more recommendations, so don't re-suggest
+them without new information: mentioning the Bedrock-driven translation/scoring
+prompt work as its own skill line (user was unsure and left it as-is — the
+existing `AWS Bedrock` chip already covers it), and any client-side game engine
+(Unity etc.) — the client referenced in Experience is an **internal library**,
+not a public engine, so there's nothing to name there.
+
+## About/Experience content rewrite (2026-08-18)
+
+User asked for research + recommendations on what an "About" section should
+cover, then approved the recommendation and asked for it to be applied along
+with a new Experience detail. Changes in `site.js` (+ `AboutApp.astro` +
+`CONTENT.md` kept in sync):
+
+- **`hero.headline`/`hero.subhead`** rewritten from generic resume-speak
+  ("Demonstrated ability to excel...", "Building clean, dependable software
+  with a data-informed mindset") to specifics naming Games Global, AWS/C#, and
+  the actual nature of the work.
+- **`about.summary`** rewritten to name concrete things instead of vague
+  claims: the Blazor simulation tool (see below), the AI/Bedrock translation
+  tool, the Stellenbosch BSc (Data Science focus), and mentoring — all facts
+  that already existed elsewhere in the site (Experience/Academics) but
+  weren't surfaced in the first thing a visitor reads.
+- **`about.facts`** changed from `Nationality`/`Age`/`Sex` to `Location`/
+  `Role`/`Focus`. Reasoning given to the user: age/sex are commonly omitted
+  from professional-facing materials (bias risk, low relevance to hiring
+  decisions) and location/role/focus serve a hiring reader better — the user
+  accepted this as part of the broader recommendation. `AboutApp.astro`'s
+  `factIcons` map was updated to match (`Location` → map pin, `Role` →
+  briefcase, `Focus` → bullseye/target) — if `about.facts` labels change again,
+  keep `factIcons`' keys in lockstep, and note the object's fallback icon
+  (`factIcons[label] ?? factIcons.Focus`) needs its fallback key updated too if
+  `Focus` is ever removed.
+- **Experience** — the Level 1 (Games Global, current) entry's `description`
+  now names a specific project instead of the generic "Built internal
+  automation tools to streamline processes": a **Blazor-based simulation
+  management website** hosted on a remote machine, used to request/run/sign
+  off game simulations for release, plus ad-hoc testing by spawning games via
+  CLI on the remote host, driving them via HTTP requests, and launching the
+  client to validate changes visually and functionally. The user said they'll
+  likely add more Experience detail on this later — if so, this is the entry
+  to extend, not a new one (it's the same ongoing Level 1 role/period).
+
+**Focus wording correction (same day)**: user clarified their base focus is
+**.NET/C#, with AWS alongside** — not the other way round. `hero.headline`
+("C# and .NET at the core, AWS alongside", was "AWS and C# by day"),
+`hero.tags` (`.NET + C# Focus`, was `AWS + C# Focus`), and `about.facts`'
+`Focus` value (`.NET + C# (AWS)`, was `AWS + C#/.NET`) were all reordered to
+lead with .NET/C#. Keep this ordering in any future copy — AWS is
+infrastructure they use, not the primary skill framing.
+
+**Factual correction (same day)**: `about.summary` previously said "AWS-backed
+game backends" — **wrong**. Per the user: game backend systems are **.NET/C#
+projects**, not hosted/backed by AWS. AWS is specifically what the AI-powered
+**translation tool** runs on (Bedrock) — that's the one place AWS genuinely
+sits behind something described in About/Experience. Fixed to "building
+.NET/C# game backends, ... and an AI-powered translation tool on AWS Bedrock".
+If you touch this copy again: **don't** describe the game backends themselves
+as AWS-hosted — only attribute AWS specifically to the translation tool (and
+whatever else is confirmed AWS-specific, e.g. the Cloud skills list), not to
+backend services generally.
+
+**Closing line simplified (same day)**: the summary's last clause ("I like
+keeping one foot in data-driven thinking even while shipping production
+C#/.NET code") was vague — user asked what it meant, which was itself a
+signal it wasn't landing. Replaced with a plainer closing: "...and I'm always
+looking for the next thing to build or learn." Don't reintroduce abstract
+"mindset"-style claims here without something concrete backing them.
+
+## Resume PDF viewer: hide sidebar, show bigger (2026-08-18)
+
+User reported the embedded PDF preview was opening with a page-thumbnail
+sidebar on the left, squeezing the actual document into a small pane. The
+iframe just points at a static `.pdf` file, so the browser's native PDF
+viewer (Chrome/Edge PDFium, Firefox PDF.js) renders it — no custom viewer
+code in this repo to fix directly. Used the standard [Adobe "open parameters"](https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_open_parameters.pdf)
+URL-fragment convention that PDF viewers widely (if inconsistently) respect:
+`ResumeApp.astro`'s iframe `src` is now
+`` `${base}DiehanCV.pdf#toolbar=0&navpanes=0&pagemode=none&view=FitH` `` —
+`navpanes=0`/`pagemode=none` both target hiding the thumbnail/bookmark sidebar
+(different viewers key off different param names, so both are included
+defensively), `toolbar=0` hides the viewer's own toolbar (fine since the page
+already has its own "Download PDF" button and an "Open the PDF directly"
+fallback link outside the iframe), and `view=FitH` fits the page to the
+frame's width instead of showing it zoomed out.
+**Caveat**: support for these fragment params varies by browser/version and
+isn't scriptable from this repo — some browsers (notably newer Chrome builds)
+may partially ignore them. There's no fully reliable cross-browser way to
+force this from a plain `<iframe src="file.pdf">` short of shipping a custom
+PDF.js viewer, which wasn't done here (extra dependency/bundle weight for a
+single preview pane) — if a browser still shows the sidebar after this, that's
+the viewer overriding the hint, not a bug in this code.
+Also bumped the visual size to make the document easier to read: the iframe's
+CSS height went from `min(70vh, 720px)` to `min(78vh, 860px)`, and the
+Resume window's default size in `apps.js` went from 640×600 to 760×760.
+
+## Contact Links flyout: hover-gap fix + Call removed (2026-08-18)
+
+User reported the LinkedIn/Email links in the dock flyout felt broken — they'd
+show on hover but disappear before a click could land, and asked for the popup
+to just work with hover-then-click instead of needing a pin-click first.
+**Root cause**: `.dock-flyout` sits `bottom: calc(100% + 14px)` above the dock
+icon — a 14px gap with nothing rendered in it. The old CSS trigger was a raw
+`.dock-item-links:hover .dock-flyout { opacity:1; pointer-events:auto; }`.
+Moving the cursor from icon to flyout crosses that gap; at that exact moment
+the pointer is over neither the icon nor the flyout, so `:hover` on
+`.dock-item-links` drops **instantly**, and since `pointer-events` isn't
+animatable it snaps to `none` right then too — even mid-fade, before the
+opacity transition finishes. The flyout was genuinely unclickable during that
+crossing, not just visually finicky.
+
+**Fix**: replaced the raw `:hover` trigger with a JS-managed `.hover-open`
+class (`DesktopScript.astro`, same `.dock-item-links` forEach block that
+already handled the click-to-pin `.open` toggle). `mouseenter` on the
+`.dock-item-links` wrapper adds `hover-open` and clears any pending close
+timer; `mouseleave` schedules removal after a 250ms delay instead of
+removing it immediately. Because `.dock-flyout` is still a DOM descendant of
+`.dock-item-links`, landing on it after crossing the gap re-fires
+`mouseenter` on the wrapper and cancels the pending close — verified directly
+in the Browser pane by dispatching synthetic `mouseenter`/`mouseleave`
+events and checking `.hover-open` survives a quick gap-crossing re-entry but
+is correctly removed ~250ms after a real, non-recovered leave. `:focus-within`
+(keyboard) and `.open` (tap/click pin, still there for touch) don't have this
+gap problem and remain direct CSS triggers, unchanged. Same swap applied in
+the mobile media query block for consistency. Escape now also clears
+`.hover-open`, not just `.open`.
+**If you touch this again**: don't go back to a bare `:hover` selector on
+`.dock-item-links` for the flyout — the gap between trigger and flyout is
+structural (it's how the flyout is positioned), so any hover-only fallback
+without the debounce will reintroduce this bug.
+
+**Call removed**: the `contactLinks` array in `Dock.astro` no longer has a
+`call`/phone entry (its glyph was also removed from `linkGlyphs`), and
+`contact.phone` was removed from `site.js` entirely — user said it's not
+needed. `ContactApp.astro`'s hint line was updated from "LinkedIn, GitHub, and
+phone" to "LinkedIn and GitHub" to match.
+
+**GitHub still pending**: `contact.github` is still `""` — the user asked for
+it to show but hasn't provided the actual profile URL yet. It'll appear in the
+flyout automatically the moment that field is filled in; don't invent a URL.
+
+## Achievements page: Professional highlight added (2026-08-18)
+
+User asked for their opinion, given they had said the page was entirely
+pre-career (school + university) with nothing from their now ~1.5 years of
+actual work — see the recommendation given, then confirmed. Added:
+
+- **New `achievements.professional` array + `professionalIntro`** in
+  `site.js`: career progression (Intern → Software Developer Level 1 in under
+  a year, sole ownership of service development), mentoring a new developer,
+  and completing the AWS Solutions Architect Associate course. **Worded
+  carefully** — "completed the ... course", not "AWS Certified Solutions
+  Architect" — the user said they completed a course, not that they passed
+  the certification exam. Don't upgrade this wording to a certification claim
+  without the user explicitly confirming they hold the actual credential.
+- **`AchievementsApp.astro`**: this renders as a new full-width `trophy-hero`-
+  styled card (`.trophy-professional`) placed **above** the existing
+  Academic/Culture+Sports grid — deliberately first in reading order, since
+  for a working professional's portfolio, professional achievements
+  outweigh school ones for a hiring-facing audience. It reuses the existing
+  `.trophy-hero` gold visual language (no new accent) since it's the same
+  "achievement highlight" register as Academic, just a different subject.
+  Reveal-stagger delays for the cards below were bumped accordingly
+  (Academic 0ms→90ms, Culture/Sports side 90ms→180ms, University 160ms→260ms)
+  since Professional now occupies the 0ms slot.
+- **`academics.highlights`** (new array, currently one entry): "Runner-up, Top
+  Undergraduate BSc Computer Science Student, Stellenbosch University" —
+  rendered as a small bullet list right under the University Education card's
+  intro paragraph, above the per-year marks tables. This is a **university**
+  honor, not a Robertson High School one, so it does NOT belong in
+  `achievements.academic` (that array's `academicIntro` is explicitly scoped
+  to "Robertson High School (2017-2021)") — keep university-specific
+  accolades in `academics.highlights`, not the school-scoped list, if more
+  get added later.
+- **Still open**: "CSV Team Leader" under Culture is still an unexplained
+  acronym — flagged to the user as worth clarifying, not yet resolved.
 
 ## Open items / things the user may still ask for
 - Chatbot (AI terminal like the reference theme has) — explicitly deferred by the
   user as a "maybe later" feature. Do not add Groq/Supabase/any backend for it
   without the user asking again; it changes hosting requirements (would need to
   move off pure static GitHub Pages).
-- Wallpaper/icon styling is intentionally original artwork, not sourced from the
-  reference theme or Apple — keep it that way if iterating further.
+- Icon styling stays original artwork "inspired by" macOS app genres, not sourced
+  from Apple's real icons — keep it that way if iterating further. The wallpaper
+  is no longer original SVG art; it's now a real, freely-licensed Unsplash photo
+  (see "Wallpaper: Bliss-style photo" above) — that's a deliberate exception the
+  user asked for, not a lapse in the "no external assets" rule.
 - Mobile windows currently force near-fullscreen height (`sizeForMobile()`) even for
   short-content apps like Contact, leaving visible empty space below the content.
   Not fixed yet — would need either sizing-to-content on mobile or a deliberate
   design call from the user on whether that empty space is fine.
+- `contact.github` is still an empty string in `site.js` — user still needs to
+  supply their actual GitHub profile URL for the Contact Links dock flyout to
+  show it. `contact.phone`/Call were removed outright (2026-08-18), not just
+  left empty — don't re-add a phone field unless the user asks again.

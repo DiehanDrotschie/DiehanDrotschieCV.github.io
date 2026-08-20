@@ -1,30 +1,84 @@
 ---
 import { achievements, academics } from "../../data/site.js";
+
+const icons = {
+    professional:
+        '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    academic:
+        '<path d="M12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.6 5.8 21 7 14 2 9.3 9 8.5Z"/>',
+    culture:
+        '<path d="M4 7h4v6a4 4 0 0 1-4-4Z"/><path d="M20 7h-4v6a4 4 0 0 0 4-4Z"/><path d="M8 4h8v9a4 4 0 0 1-8 0Z"/><path d="M12 17v3"/><path d="M9 21h6"/>',
+    sports:
+        '<circle cx="12" cy="8" r="5"/><path d="M8.2 12.6 6.5 21l5.5-3 5.5 3-1.7-8.4"/>',
+};
+
+const markTier = (mark) => {
+    const n = Number(mark);
+    if (n >= 90) return "mark-top";
+    if (n >= 80) return "mark-high";
+    if (n >= 70) return "mark-mid";
+    return "mark-pass";
+};
 ---
 
 <div class="app-content">
     <h2>Achievements</h2>
-    <div class="grid grid-2">
-        <div class="card">
-            <h4>Academic</h4>
-            <p class="text-secondary">{achievements.academicIntro}</p>
-            {achievements.academic.map((item) => <p>- {item}</p>)}
+    <div class="card trophy-card trophy-hero trophy-professional reveal-rise">
+        <div class="trophy-header">
+            <span class="trophy-icon" set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons.professional}</svg>`} />
+            <h4>Professional</h4>
         </div>
-        <div class="stack">
-            <div class="card">
-                <h4>Culture</h4>
-                {achievements.culture.map((item) => <p>- {item}</p>)}
+        <p class="text-secondary">{achievements.professionalIntro}</p>
+        <ul class="trophy-list">
+            {achievements.professional.map((item) => <li>{item}</li>)}
+        </ul>
+    </div>
+    <div class="achievements-grid">
+        <div class="card trophy-card trophy-hero reveal-rise" style="--reveal-delay:90ms">
+            <div class="trophy-header">
+                <span class="trophy-icon" set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons.academic}</svg>`} />
+                <h4>Academic</h4>
             </div>
-            <div class="card">
-                <h4>Sports</h4>
-                {achievements.sports.map((item) => <p>- {item}</p>)}
+            <p class="text-secondary">{achievements.academicIntro}</p>
+            <div class="trophy-stat">
+                <span class="trophy-stat-value" data-count-to="94.57" data-suffix="%">0%</span>
+                <span class="trophy-stat-label">Grade 12 average</span>
+            </div>
+            <ul class="trophy-list">
+                {achievements.academic.map((item) => <li>{item}</li>)}
+            </ul>
+        </div>
+        <div class="card trophy-card trophy-side reveal-rise" style="--reveal-delay:180ms">
+            <div class="trophy-section">
+                <div class="trophy-header">
+                    <span class="trophy-icon trophy-icon-sm" set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons.culture}</svg>`} />
+                    <h4>Culture</h4>
+                </div>
+                <ul class="trophy-list">
+                    {achievements.culture.map((item) => <li>{item}</li>)}
+                </ul>
+            </div>
+            <div class="trophy-section-divider"></div>
+            <div class="trophy-section">
+                <div class="trophy-header">
+                    <span class="trophy-icon trophy-icon-sm" set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons.sports}</svg>`} />
+                    <h4>Sports</h4>
+                </div>
+                <ul class="trophy-list">
+                    {achievements.sports.map((item) => <li>{item}</li>)}
+                </ul>
             </div>
         </div>
     </div>
 
-    <div class="card university-card">
+    <div class="card university-card reveal-rise" style="--reveal-delay:260ms">
         <h3>University Education</h3>
         <p class="text-secondary">{academics.intro}</p>
+        {academics.highlights?.length > 0 && (
+            <ul class="trophy-list university-highlights">
+                {academics.highlights.map((item) => <li>{item}</li>)}
+            </ul>
+        )}
         {
             academics.years.map((year) => (
                 <div>
@@ -42,7 +96,11 @@ import { achievements, academics } from "../../data/site.js";
                                 {year.rows.map((row) => (
                                     <tr>
                                         <td>{row[0]}</td>
-                                        <td>{row[1]}</td>
+                                        <td>
+                                            <span class={`mark-badge ${markTier(row[1])}`}>
+                                                {row[1]}
+                                            </span>
+                                        </td>
                                         <td>{row[2]}</td>
                                     </tr>
                                 ))}
@@ -56,10 +114,25 @@ import { achievements, academics } from "../../data/site.js";
 </div>
 
 <style>
-    .stack {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+    .trophy-professional {
+        margin-bottom: 1.5rem;
+    }
+
+    .university-highlights {
+        margin: -0.25rem 0 1.25rem;
+    }
+
+    .achievements-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    @media (max-width: 640px) {
+        .achievements-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .university-card {
@@ -69,4 +142,209 @@ import { achievements, academics } from "../../data/site.js";
     .table-scroll {
         overflow-x: auto;
     }
+
+    .trophy-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .trophy-hero {
+        background: linear-gradient(
+            165deg,
+            rgba(255, 224, 102, 0.14) 0%,
+            rgba(242, 169, 0, 0.05) 100%
+        );
+        border-color: rgba(242, 169, 0, 0.2);
+    }
+
+    .trophy-side {
+        gap: 0;
+    }
+
+    .trophy-section-divider {
+        height: 1px;
+        margin: 1rem 0;
+        background: linear-gradient(
+            to right,
+            rgba(242, 169, 0, 0.25),
+            rgba(242, 169, 0, 0.02)
+        );
+    }
+
+    .trophy-stat {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin: 0.75rem 0 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        background: rgba(242, 169, 0, 0.1);
+    }
+
+    .trophy-stat-value {
+        font-family: var(--font-display);
+        font-size: 1.9rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #a06a00;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .trophy-stat-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .trophy-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .trophy-header h4 {
+        margin: 0;
+    }
+
+    .trophy-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        border-radius: 9px;
+        background: linear-gradient(160deg, #ffe066 0%, #f2a900 100%);
+        color: #4a3400;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .trophy-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .trophy-icon-sm {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+    }
+
+    .trophy-icon-sm svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .trophy-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .trophy-list li {
+        position: relative;
+        padding-left: 1.15rem;
+    }
+
+    .trophy-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.55rem;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: linear-gradient(160deg, #ffe066 0%, #f2a900 100%);
+    }
+
+    .mark-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        min-width: 2.4rem;
+        justify-content: center;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.82rem;
+    }
+
+    .mark-top {
+        background: linear-gradient(135deg, #fff3c9 0%, #e8b64a 55%, #c98d1e 100%);
+        color: #5c3d00;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 0 1px rgba(201, 141, 30, 0.35);
+    }
+
+    .mark-top::before {
+        content: "\2605";
+        font-size: 0.7rem;
+        line-height: 1;
+    }
+
+    .mark-high {
+        background: rgba(15, 91, 91, 0.14);
+        color: #0f5b5b;
+    }
+
+    .mark-mid {
+        background: rgba(47, 107, 214, 0.14);
+        color: #2f6bd6;
+    }
+
+    .mark-pass {
+        background: rgba(92, 88, 79, 0.12);
+        color: var(--text-secondary);
+    }
 </style>
+
+<script>
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const animated = new WeakSet<HTMLElement>();
+
+    function animateCount(el: HTMLElement) {
+        if (animated.has(el)) return;
+        animated.add(el);
+        const target = parseFloat(el.dataset.countTo ?? "0");
+        const suffix = el.dataset.suffix ?? "";
+        if (reduceMotion || Number.isNaN(target)) {
+            el.textContent = `${target}${suffix}`;
+            return;
+        }
+        const duration = 900;
+        const start = performance.now();
+        let settled = false;
+        const settle = () => {
+            if (settled) return;
+            settled = true;
+            el.textContent = `${target}${suffix}`;
+        };
+        function tick(now: number) {
+            if (settled) return;
+            const progress = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = `${(target * eased).toFixed(2)}${suffix}`;
+            if (progress < 1) requestAnimationFrame(tick);
+            else settle();
+        }
+        requestAnimationFrame(tick);
+        // Backgrounded/throttled tabs can stall rAF indefinitely — never leave
+        // the real number stuck at an intermediate/zero value.
+        window.setTimeout(settle, duration + 800);
+    }
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) animateCount(entry.target as HTMLElement);
+            });
+        },
+        { threshold: 0.4 },
+    );
+
+    document.querySelectorAll<HTMLElement>("[data-count-to]").forEach((el) => observer.observe(el));
+</script>

@@ -18,7 +18,7 @@ import { apps } from "../../data/apps.js";
         </div>
         <div class="spotlight-results" id="spotlight-results">
             {
-                apps.map((app) => (
+                apps.filter((app) => !app.links).map((app) => (
                     <button
                         type="button"
                         class="spotlight-result"
