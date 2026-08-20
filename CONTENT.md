@@ -116,35 +116,39 @@ Grouped the same way as the Skills app in the live site.
 
 ## Portfolio / Work
 
-These are some very basic projects I have worked on.
+**Superseded 2026-08-20.** This section described the site's *original* (pre-refactor)
+six-project list, kept here only as history. The Work app's actual content now comes
+from a completely different, much richer source — see below.
 
-1. **Tic Tac Toe**
-   A Java-based game that detects wins, draws, and supports quick rematches.
-   Images: `Photos/tictactoe.jpg`
+### Current source of truth
 
-2. **Impasse Game**
-   Grid-based puzzle with multi-color constraints and rule-driven solving.
-   Images: `Photos/imp1.jpg`, `Photos/imp2.jpg`
+Each project's **full** write-up (course/client context, architecture notes, every
+screenshot with a caption, and a note on how the screenshots were captured) lives in
+`ProjectsScreenshotsAndInfo/<slug>/content.md` at the repo root, with the screenshots
+alongside it. That folder is the canonical, most-detailed version of each project.
 
-3. **Moving Maze**
-   A shifting maze game with player tokens, board pushes, and goal-oriented play.
-   Images: `Photos/mvz.jpg`
+`src/data/projects.js` is a **curated, CV-facing trim** of those write-ups — stack,
+role (where applicable), a summary, and the 3-4 most technically substantial
+highlights per project — which is what actually renders in the Work app. It is not
+a full copy of the `content.md` files; deliberately shorter, focused on what's
+relevant to a software engineer's CV. Screenshots are duplicated into
+`public/Projects/<slug>/` (Astro only serves `public/`, so the source folder's images
+can't be referenced directly).
 
-4. **Compression + Decompression Software**
-   Finite automata-based compression for images and text, with reversible decoding.
-   Images: `Photos/decsoft.jpg`
+Current project list (in display order — see `projects.js` for why): Propagen
+Website, Bar Valley Properties (Propagen client site), E-Spaza (CS344), InkLink
+(CS343), Instagram Clone, Gomoku AI Player (CS314), DFA-Based Image Compression
+(CS214), Moving Maze (CS144), Impasse (CS114), Wedding Table Allocation.
 
-5. **Wedding Table Allocation**
-   Guest lookup experience with table and date pairing from JSON records.
-   Images: `Photos/wedding1.jpg`, `Photos/wedding2.jpg`
+**Dropped**: the original "Tic Tac Toe" project isn't in `ProjectsScreenshotsAndInfo/`
+and was dropped when this was rebuilt — the user confirmed that folder is the
+definitive project list going forward. If Tic Tac Toe should come back, it needs its
+own `ProjectsScreenshotsAndInfo/<slug>/` entry first, not a direct add to
+`projects.js`.
 
-6. **Instagram Clone**
-   Dart + Firebase project exploring uploads, feeds, search, and social interactions.
-   Images: `Photos/ios1.jpg`, `Photos/ios2.jpg`, `Photos/ios3.jpg`, `Photos/ios4.jpg`,
-   `Photos/ios5.jpg` (additional images `ios6.jpg`–`ios10.jpg` also exist in `public/Photos/`)
-
-> Note: the React site rendered these as cards that open a lightbox/gallery dialog with
-> prev/next navigation and thumbnails when a project has multiple images.
+If you edit a project's content, update `content.md` in
+`ProjectsScreenshotsAndInfo/` first (it's the detailed source), then bring the
+relevant trimmed version into `projects.js` to match — don't let the two drift.
 
 ---
 

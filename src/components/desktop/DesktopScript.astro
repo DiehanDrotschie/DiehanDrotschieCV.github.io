@@ -26,15 +26,26 @@ const appMeta = apps
     // shared checker for all apps — the pattern (and the reduced-motion
     // escape hatch) is identical everywhere, so it doesn't belong per-app.
     //
-    // Deliberately NOT an IntersectionObserver: this environment's sandboxed
-    // Browser pane never composites a frame (the same underlying cause as the
-    // existing animationend/requestAnimationFrame gotchas elsewhere in this
-    // file), so IO callbacks never fire here — confirmed by direct test,
-    // elements sat at opacity 0 forever despite being squarely in the
-    // viewport. Plain `scroll`/`resize` events and direct calls fire
-    // regardless of compositing, so a manual getBoundingClientRect check
-    // driven by those is the robust choice over something that could
-    // silently never reveal content for some visitors.
+    // IntersectionObserver is the primary mechanism (cheap, browser-native,
+    // zero per-scroll-frame JS cost) and correctly respects clipping by a
+    // `.window-body`'s own scroll — modern browsers clip intersection by all
+    // scrolling ancestors between the target and the implicit (viewport)
+    // root, not just the target/root pair directly.
+    //
+    // `revealVisible()`/`isInView()` below are a manual getBoundingClientRect
+    // fallback, used ONLY when IntersectionObserver isn't available (rare in
+    // 2026) or its callback never actually arrives — confirmed by direct
+    // test that this project's sandboxed Browser pane never composites a
+    // frame, so IO callbacks never fire there even though the API exists.
+    // Earlier this fallback was wired to a raw, unthrottled `scroll` listener
+    // that ran a full getBoundingClientRect() pass on every scroll event —
+    // real, measurable jank on every visitor's machine to accommodate a test
+    // tool's quirk. It's now direct-call-only (window open/restore/maximize,
+    // where a call is cheap because it only runs on those actions, not every
+    // scroll frame) plus one initial check — it does NOT attach scroll/resize
+    // listeners. Don't re-add unthrottled scroll listeners here; if IO ever
+    // needs a broader safety net, throttle it (rAF-gated) rather than running
+    // on every raw scroll/resize event.
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     function isInView(el) {
@@ -59,6 +70,20 @@ const appMeta = apps
             .forEach((el) => {
                 if (isInView(el)) el.classList.add("is-visible");
             });
+    }
+
+    let revealObserver = null;
+    if (!reduceMotion && "IntersectionObserver" in window) {
+        revealObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add("is-visible");
+                    revealObserver.unobserve(entry.target);
+                });
+            },
+            { threshold: 0.15, rootMargin: "0px 0px -10% 0px" },
+        );
     }
 
     function isMobile() {
@@ -561,15 +586,20 @@ const appMeta = apps
     // Open default windows on load
     appMeta.filter((a) => a.openOnLoad).forEach((a) => openWindow(a.id));
 
-    // Wire up scroll-reveal: a scroll inside any window body, or a viewport
-    // resize, can bring new `.reveal`/`.reveal-rise` content into view.
-    // Window open/restore/maximize are covered directly at their call sites
-    // above since those don't dispatch a scroll event on their own.
-    if (!reduceMotion) {
-        document.querySelectorAll(".window-body").forEach((body) => {
-            body.addEventListener("scroll", revealVisible);
-        });
-        window.addEventListener("resize", revealVisible);
-        revealVisible();
+    // Wire up scroll-reveal: hand every `.reveal`/`.reveal-rise` element to
+    // the IntersectionObserver (fires automatically on scroll AND on a
+    // window's display:none→flex transition when it opens — no manual
+    // per-window wiring needed for that). No scroll/resize listeners are
+    // attached here — see the comment above `revealObserver` for why that
+    // was deliberately removed. The one `revealVisible()` call below is a
+    // single synchronous pass so already-visible content (e.g. the
+    // `openOnLoad` window above) shows immediately rather than waiting on
+    // IO's slight async delay, and so the sandboxed test Browser pane (where
+    // IO callbacks never arrive) still has a working initial reveal.
+    if (revealObserver) {
+        document
+            .querySelectorAll(".reveal, .reveal-rise")
+            .forEach((el) => revealObserver.observe(el));
     }
+    revealVisible();
 </script>

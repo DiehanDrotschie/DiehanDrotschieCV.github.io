@@ -827,6 +827,263 @@ actual work — see the recommendation given, then confirmed. Added:
 - **Still open**: "CSV Team Leader" under Culture is still an unexplained
   acronym — flagged to the user as worth clarifying, not yet resolved.
 
+## Work app rebuilt on ProjectsScreenshotsAndInfo (2026-08-20)
+
+User pointed at a repo-root folder, `ProjectsScreenshotsAndInfo/<slug>/`, containing
+a `content.md` write-up + screenshots per project (10 projects total) and asked for
+the Work app to be rebuilt around it: cards that open into a screenshot carousel with
+the technical write-up below, curated for a software-engineer CV.
+
+**Data flow / source of truth** (also documented in `CONTENT.md`'s Portfolio
+section — read that first if this drifts):
+- `ProjectsScreenshotsAndInfo/<slug>/content.md` is the **full, detailed** write-up
+  (course/client context, architecture prose, every screenshot's caption, a note on
+  how screenshots were captured) — treat it as the canonical source when a project's
+  facts need correcting.
+- `src/data/projects.js` (**new file**, replaces the old `projects` array that used
+  to live in `site.js` — that array is gone) is a **curated trim** of each
+  `content.md`: `slug`, `title`, `context`, `stack[]`, `role` (optional), `repo`
+  (optional), `summary`, `highlights[]` (3-4 picked, not every bullet from the
+  source), `images[]` (`{file, caption}`). This is deliberately NOT a full copy —
+  the user asked for "the important parts for a CV ... focusing on technical
+  things", so highlights were hand-picked for technical substance, not pasted
+  wholesale. If asked to update a project, edit `content.md` first, then bring the
+  trim in `projects.js` back in sync — don't let them drift.
+- **Screenshots are duplicated**, not referenced in place: copied from
+  `ProjectsScreenshotsAndInfo/<slug>/*.{png,jpg,jpeg}` into `public/Projects/<slug>/`
+  (a one-time `cp`, not a build step) because Astro only serves files under
+  `public/` — the source folder isn't reachable at runtime. **If a screenshot is
+  ever added/changed in `ProjectsScreenshotsAndInfo/`, it must be manually
+  re-copied into the matching `public/Projects/<slug>/` folder**, there's no
+  automated sync between them.
+- **Verified against the filesystem before authoring**: `cs114-impasse` and
+  `cs144-moving-maze`'s `content.md` screenshot tables each reference a 3rd
+  "console mode" file (`03-text-mode-console.png`) that was never actually saved to
+  disk — only 2 images exist for each in the source folder. `projects.js`
+  deliberately omits that 3rd entry for both rather than linking a broken image.
+  Don't add it back unless that screenshot actually gets captured and dropped into
+  the source folder.
+- **Old `public/Photos/` project images removed**: `decsoft.jpg`, `imp1/2.jpg`,
+  `ios1-10.jpg`, `mvz.jpg`, `tictactoe.jpg`, `wedding1/2.jpg` were deleted — fully
+  superseded by `public/Projects/`, and nothing referenced them anymore.
+  `Photos/pfp.jpg` (profile photo) and `Photos/wallpaper-hills.jpg` (desktop
+  background) are unrelated and were kept.
+- **Tic Tac Toe dropped**: the old six-project list included a "Tic Tac Toe" game
+  with no corresponding `ProjectsScreenshotsAndInfo/` entry. User confirmed that
+  folder is the definitive project list, so it wasn't carried forward. If it comes
+  back, it needs a `ProjectsScreenshotsAndInfo/tic-tac-toe/content.md` +
+  screenshots first — don't hand-add it directly to `projects.js` without that.
+- **Ordering is deliberate, not alphabetical/chronological**: `projects.js` orders
+  by "strongest/most production-like first" — Propagen Website, the Propagen client
+  site, then substantial university group/solo projects, ending with the simplest
+  personal project (Wedding Table Allocation). `projects[0]` is also used as the
+  featured (2-column) card in the grid — keep that in sync if reordering.
+
+**`WorkApp.astro` rewrite**:
+- Grid cards now show a thumbnail, title, a `context` line (course/client/personal),
+  and up to 4 stack chips (`+N` overflow badge beyond that) — replacing the old
+  single-sentence description, since stack-at-a-glance matters more for a technical
+  CV audience than prose.
+- Clicking a card opens `.project-dialog` (renamed from the old `.gallery-dialog`),
+  which now has **two parts in one scrollable dialog**: the existing image
+  carousel (prev/next arrows, thumbnail strip, keyboard arrows — unchanged
+  mechanics) with each image's **real caption** from the source `content.md`
+  table shown under it (previously just "N / total"), and below that a
+  `.project-detail` panel — title, context, stack chips, role (hidden via
+  `:empty` CSS if absent), summary, a "Technical highlights" bullet list, and a
+  "View repository" link (hidden unless `project.repo` is set).
+- **Data handoff to the client script**: `WorkApp.astro`'s frontmatter builds a
+  `clientProjects` array (same shape as `projects.js` but with `image.file` already
+  resolved to a full `public/Projects/...` URL) and serializes it into a
+  `data-projects="..."` JSON attribute on the dialog (`JSON.stringify` — Astro
+  HTML-escapes it automatically, matching the existing `data-images` pattern this
+  file already used). The client `<script>` parses that once and looks up the
+  clicked card's project by `data-slug`, rather than re-deriving `base`/URLs in JS.
+- Verified end-to-end in the Browser pane: all 10 cards render, a project **with**
+  role+repo (Bar Valley Properties) shows both, a project **without** either
+  (Gomoku AI) correctly hides both, next/prev correctly updates the caption, and
+  single-image projects (Gomoku, DFA compression) correctly disable both nav arrows.
+
+**Follow-up same day — uniform card sizing + no university/course mentions**:
+- User wanted every project card **exactly the same size**, even maximized,
+  accepting some content getting visually tight as the tradeoff. The grid used
+  to give the "strongest" project (`projects[0]`) a 2-column span + taller
+  thumb (`.project-card-featured`) — removed entirely, along with the
+  `featuredSlug` logic in the frontmatter. `.project-card` is now a **fixed
+  300px-tall flex column** (thumb fixed 160px, body `flex:1`), with the title
+  clamped to 2 lines (`-webkit-line-clamp`), context truncated to 1 line
+  (`text-overflow: ellipsis`), and the stack-chip row capped to one row via
+  `max-height` + `overflow: hidden` — all specifically so body content never
+  pushes a card taller than its neighbors. Verified maximized: all 10 cards
+  measured identically (347×288 at one tested window size). **Don't
+  reintroduce a featured/span-2 card** without checking with the user first —
+  this was a deliberate reversal of the earlier design, not an oversight.
+- User also asked to **never mention university or course** anywhere in the
+  project cards. The six Stellenbosch-coursework projects' `context` field in
+  `projects.js` (`"CS114 — Stellenbosch University, 1st Year"` etc.) was
+  changed to `"Team project"` for the two group projects (E-Spaza, InkLink) and
+  `"Personal project"` for the four solo ones (Gomoku, DFA compression, Moving
+  Maze, Impasse) — matching the phrasing already used for the non-coursework
+  personal projects. The Work app's intro paragraph also had "university
+  coursework" reworded to "personal builds". **If new projects get added to
+  `projects.js`, don't put course/university info in the visitor-facing
+  `context` field** — that detail can stay in `ProjectsScreenshotsAndInfo/`'s
+  `content.md` (which the user hasn't asked to scrub), just not in what
+  actually renders.
+
+## Work app: two real bugs found chasing "cards misaligned" + "dialog shows nothing" (2026-08-20)
+
+User reported two things that turned out to have one shared root cause and one
+genuinely separate bug. Both fixed in `WorkApp.astro`.
+
+**Bug 1 — dynamically-created elements don't get Astro's scoped-style attribute.**
+The project detail dialog appeared to show "nothing about the project" below the
+carousel. Root cause: `.gallery-thumbs img`, `.project-detail-stack .chip`, and
+`.project-detail-highlights li` were all scoped CSS rules targeting elements
+created via `document.createElement()` in the `<script>` block (thumbnails,
+stack chips, highlight bullets). **Astro only stamps its scoped `data-astro-cid-*`
+attribute onto elements present in the component's own template at build/render
+time — never onto elements a client script creates afterward** — so none of
+those three rules ever matched anything. The visible symptom was extreme:
+unstyled thumbnail `<img>`s rendered at their natural size (~700×1900px each,
+capped only by global.css's `img { max-width: 100% }`) instead of 44×44,
+pushing the actual `.project-detail` (title/summary/highlights) around **8000px**
+down inside the dialog's scroll area — so a user opening a card and not
+scrolling an absurd distance would see only the carousel and conclude there
+was no write-up at all. Fixed by wrapping the dynamic-element part of each
+selector in `:global(...)` (`.gallery-thumbs :global(img)`,
+`.project-detail-stack :global(.chip)`, `.project-detail-highlights :global(li)`
+— see the inline comments at each rule). **This is a general gotcha, not
+specific to this bug**: any future `document.createElement()` in an Astro
+component's `<script>` needs its styling rules written with `:global()` around
+the dynamic-element selector, in this file or a new one — grepped the rest of
+`src/` for `document.createElement` and confirmed WorkApp.astro is currently
+the only file using this pattern.
+Also bumped the dialog itself larger per the user's request while fixing this
+(`width: min(90vw,760px)→min(94vw,920px)`, `max-height: 85vh→90vh`) — with the
+thumbnail bug fixed, the full write-up now fits without scrolling at most
+common window sizes anyway, but the extra size was asked for directly, not
+just a side effect of the bug fix.
+
+**Bug 2 — per-card scroll-reveal was gating on scroll for a compact grid.**
+Cards beyond the first row appeared to be "slightly lower" / not lined up when
+the Work window was maximized. This was the site-wide scroll-reveal system
+(see "Scroll-reveal system" above) working exactly as designed — rows below
+the visible fold of the window start at `opacity:0; transform:translateY(18px)`
+until scrolled into view or the window is resized/maximized in a way that
+brings them into `.window-body`'s visible clipped rect — but for a dense
+project grid where the user expects to just see cards, not scroll to "unlock"
+rows, that reads as a bug, not an animation. Removed `reveal-rise` (and the
+per-card `--reveal-delay` stagger) from `.project-card` entirely; the grid div
+itself (`.project-grid`) is still a direct child of `.app-content` and already
+gets the existing `.window.open .app-content > *` entrance stagger, so all
+cards now simply appear together when the window opens — no scroll-gating, no
+per-row alignment lag. Verified: after this fix, every card measured
+`opacity:1; transform:none` immediately after opening/maximizing, with
+uniform 311px row spacing across all 5 rows. **Don't reintroduce `reveal-rise`
+on individual grid cards in a dense card grid** — it's the right pattern for
+long vertically-scrolled content per app (About, Skills, Achievements, etc.),
+wrong for a compact grid meant to be seen all at once.
+
+## Performance: scroll-reveal was unthrottled (2026-08-20)
+
+User reported the site felt "extremely laggy." Root cause: the scroll-reveal
+system (see "Scroll-reveal system" above) was wired to a **raw, unthrottled
+`scroll` listener on every `.window-body`**, and on every single scroll event
+it ran `document.querySelectorAll(".reveal:not(.is-visible), ...")` plus a
+`getBoundingClientRect()` call (forces synchronous layout) for every
+not-yet-revealed element on the page. That's real, measurable jank on a
+scroll gesture (which can fire dozens of events per second) — a classic
+layout-thrashing anti-pattern. It was written this way specifically to work
+around this sandboxed Browser pane never firing IntersectionObserver
+callbacks (a test-tool quirk, confirmed by direct test — see the git history
+of this section) — but that traded away real performance for every actual
+site visitor to accommodate one test environment. Fixed in
+`DesktopScript.astro`:
+- **IntersectionObserver is now the primary mechanism** (`revealObserver`) —
+  cheap, browser-native, and correctly respects `.window-body` clipping via
+  modern browsers' "clip by all scrolling ancestors" IO behavior. Every
+  `.reveal`/`.reveal-rise` element is observed once at load; IO fires
+  automatically both on scroll AND on a window's `display:none→flex`
+  transition when it opens, so no manual per-window wiring is needed for that
+  case anymore.
+- `revealVisible()`/`isInView()` (the manual `getBoundingClientRect` checker)
+  still exist, but are now **direct-call-only** — invoked once at load, and
+  at the `openWindow`/`restoreMinimized`/`maximizeWindow` call sites (cheap,
+  since those only run on discrete user actions, not every scroll frame).
+  **No scroll or resize event listeners are attached to this checker
+  anymore.** This is what still makes the reveal system testable in this
+  sandboxed pane (where IO never fires) without costing real visitors
+  anything on scroll.
+- **If this needs a broader fallback later** (e.g. IO turns out to be
+  unreliable somewhere in practice), throttle it — a rAF-gated ticking guard,
+  not a raw listener — before reintroducing scroll/resize wiring. Don't put
+  back an unthrottled scroll listener here.
+- Other things checked and ruled out as the primary cause but worth knowing
+  about if lag is still reported after this: the "Liquid Glass" restyle (see
+  above) uses fairly heavy `backdrop-filter: blur(34-38px) saturate(2.1-2.2)`
+  on the menu bar and dock, which sit over a large photographic wallpaper —
+  backdrop-filter at this blur radius is one of the more GPU-expensive CSS
+  properties, especially on lower-end hardware. Not touched this round since
+  the unthrottled-scroll bug was the clear, concrete, verifiable culprit, but
+  if lag persists after this fix, that's the next thing to look at (would need
+  the user's buy-in first, since it's a deliberate visual choice, not a bug).
+
+## "View repository" button removed for now (2026-08-20)
+
+User asked to not show a repository link on project cards for now. Removed the
+`<a class="project-detail-repo">` element, its CSS, and its JS wiring
+(`detailRepo` in `WorkApp.astro`'s script) entirely — not just hidden via
+CSS. The `repo` field itself is still present in `projects.js` and the
+`Project` TS type (harmless, still-valid metadata for two projects), so
+re-adding the button later is a small, contained change — re-add the
+`<a>` element + `.project-detail-repo`/`.visible` CSS + the `detailRepo`
+lookup/toggle logic removed here, don't need to touch `projects.js`.
+
+## Performance: project screenshots were 5-20x too big (2026-08-20)
+
+Fixing the unthrottled-scroll bug above didn't fully fix it — user reported it
+was "still slightly laggy but only when opening one of the portfolio projects."
+Checked `public/Projects/` file sizes directly: **23MB total**, individual
+files up to **2.6MB** (`instagram-clone/03-feed.jpg`), several others over
+1MB — served at native resolution (some genuinely huge, e.g. 1440×3965 full-
+page captures) despite only ever being displayed at ≤42vh in the carousel or
+44px in the thumbnail strip. Opening a project loaded/decoded every one of
+that project's images near-simultaneously (thumbnails render the same
+full-size file as the main image, not a separate small variant) — for a
+project like `instagram-clone` (10 images) or
+`propagen-client-website-template` (8 images), that's several MB of
+simultaneous image decode work on the main thread, which is exactly what a
+user would feel as lag specifically when opening a project.
+
+**Fix**: a one-off Node script (`sharp`-based) resized every file in
+`public/Projects/` to fit within 1600×2400 (`fit: "inside",
+withoutEnlargement`) and re-compressed (PNG: `quality:80, palette:true`;
+JPEG: `quality:80, mozjpeg`), **in place, same filenames** — `projects.js`
+needed zero changes. Only overwrote a file if the result was actually
+smaller (never regressed an already-small file). **Result: 23.1MB → 4.31MB
+(~81% smaller)**, with the worst offender (`instagram-clone/03-feed.jpg`)
+going from 2.6MB to 143KB. Did **not** touch `ProjectsScreenshotsAndInfo/` —
+that folder stays the full-resolution source archive; only the served
+`public/Projects/` copies were shrunk.
+**The script itself was deliberately removed after this one-time run**
+(2026-08-20, same day) — the user didn't want it kept around as a permanent
+part of the repo, and `sharp` was removed from `devDependencies` +
+`package-lock.json` (via `npm install --package-lock-only`, not hand-edited)
+along with it, since nothing else in the repo uses it. **If new project
+screenshots get added later and feel oversized again**: there's no
+ready-to-run script anymore — either write a similar one-off `sharp` script
+again (same approach: resize to fit within ~1600×2400, `quality:80`,
+overwrite only if smaller, leave `ProjectsScreenshotsAndInfo/` alone) or
+manually compress before copying into `public/Projects/<slug>/`. Don't
+assume a script still exists here.
+Also added `loading="lazy"` + `decoding="async"` to the dynamically-created
+thumbnail `<img>`s and `decoding="async"` + `fetchpriority="high"` to the
+main carousel `<img>` in `WorkApp.astro` (these were **not** reverted — only
+the one-off script and its dependency were) — so the browser prioritizes the
+image the user is actually looking at over the off-screen-ish thumbnail
+strip.
+
 ## Open items / things the user may still ask for
 - Chatbot (AI terminal like the reference theme has) — explicitly deferred by the
   user as a "maybe later" feature. Do not add Groq/Supabase/any backend for it

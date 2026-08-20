@@ -1,49 +1,93 @@
 ---
-import { projects } from "../../data/site.js";
+import { projects } from "../../data/projects.js";
 
 const base = import.meta.env.BASE_URL;
-const featuredTitle = projects.reduce((a, b) =>
-    b.images.length > a.images.length ? b : a,
-).title;
+const imgSrc = (slug, file) => `${base}Projects/${slug}/${file}`;
+
+// Client script only needs resolved image URLs + the same fields already in
+// projects.js; built here so the script doesn't need to know about `base`.
+const clientProjects = projects.map((p) => ({
+    slug: p.slug,
+    title: p.title,
+    context: p.context ?? "",
+    stack: p.stack ?? [],
+    role: p.role ?? "",
+    repo: p.repo ?? "",
+    summary: p.summary ?? "",
+    highlights: p.highlights ?? [],
+    images: (p.images ?? []).map((img) => ({
+        src: imgSrc(p.slug, img.file),
+        caption: img.caption ?? "",
+    })),
+}));
 ---
 
 <div class="app-content work-app">
     <h2>Portfolio</h2>
-    <p class="text-secondary">These are some very basic projects I have worked on.</p>
+    <p class="text-secondary">
+        Projects I've built, from client work to personal builds — open any card for
+        screenshots and the technical write-up.
+    </p>
     <div class="grid grid-2 project-grid">
         {
-            projects.map((project, i) => (
-                <button
-                    type="button"
-                    class:list={["card", "project-card", "reveal-rise", { "project-card-featured": project.title === featuredTitle }]}
-                    style={`--reveal-delay:${i * 70}ms`}
-                    data-images={project.images.map((img) => `${base}${img}`).join("|")}
-                    data-title={project.title}
-                >
+            projects.map((project) => (
+                <button type="button" class="card project-card" data-slug={project.slug}>
                     <div class="project-thumb">
-                        <img src={`${base}${project.images[0]}`} alt={project.title} />
+                        <img
+                            src={imgSrc(project.slug, project.images[0].file)}
+                            alt={project.title}
+                            loading="lazy"
+                        />
                         {project.images.length > 1 && (
                             <span class="project-badge">{project.images.length} photos</span>
                         )}
                     </div>
                     <div class="project-body">
                         <h4>{project.title}</h4>
-                        <p class="text-secondary">{project.description}</p>
+                        {project.context && (
+                            <p class="text-secondary project-context">{project.context}</p>
+                        )}
+                        <div class="project-stack">
+                            {project.stack.slice(0, 4).map((s) => (
+                                <span class="chip project-chip">{s}</span>
+                            ))}
+                            {project.stack.length > 4 && (
+                                <span class="chip project-chip project-chip-more">
+                                    +{project.stack.length - 4}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </button>
             ))
         }
     </div>
 
-    <dialog class="gallery-dialog">
+    <dialog class="project-dialog" data-projects={JSON.stringify(clientProjects)}>
         <button type="button" class="gallery-close" aria-label="Close">&times;</button>
-        <div class="gallery-main">
-            <button type="button" class="gallery-nav gallery-prev" aria-label="Previous image">&#8249;</button>
-            <img class="gallery-image" src="" alt="" />
-            <button type="button" class="gallery-nav gallery-next" aria-label="Next image">&#8250;</button>
+        <div class="project-dialog-scroll">
+            <div class="gallery-main">
+                <button type="button" class="gallery-nav gallery-prev" aria-label="Previous image">&#8249;</button>
+                <img class="gallery-image" src="" alt="" decoding="async" fetchpriority="high" />
+                <button type="button" class="gallery-nav gallery-next" aria-label="Next image">&#8250;</button>
+            </div>
+            <div class="gallery-thumbs"></div>
+            <p class="gallery-caption"></p>
+
+            <div class="project-detail">
+                <div class="project-detail-header">
+                    <h3 class="project-detail-title"></h3>
+                    <p class="text-secondary project-detail-context"></p>
+                </div>
+                <div class="project-detail-stack"></div>
+                <p class="project-detail-role"></p>
+                <p class="text-secondary project-detail-summary"></p>
+                <div class="project-detail-highlights">
+                    <h4>Technical highlights</h4>
+                    <ul></ul>
+                </div>
+            </div>
         </div>
-        <div class="gallery-thumbs"></div>
-        <p class="gallery-caption"></p>
     </dialog>
 </div>
 
@@ -70,38 +114,35 @@ const featuredTitle = projects.reduce((a, b) =>
         box-shadow: 0 12px 26px rgba(31, 143, 224, 0.22);
     }
 
-    .project-card-featured {
-        grid-column: span 2;
-    }
-
-    @media (max-width: 640px) {
-        .project-card-featured {
-            grid-column: span 1;
-        }
-    }
-
-    .project-card-featured .project-thumb {
-        height: 240px;
+    /* Every card is the same fixed size, deliberately — the grid used to give
+       the "featured" project a 2-column span and a taller thumb, but the user
+       wants uniform card sizing even at the cost of some content looking
+       tight (title clamped to 2 lines, context truncated to 1 line, stack
+       chips capped to one row) rather than cards of different sizes. Don't
+       reintroduce a featured/span-2 card without checking back — this was a
+       deliberate reversal, not an oversight. */
+    .project-card {
+        height: 300px;
+        display: flex;
+        flex-direction: column;
     }
 
     .project-thumb {
         position: relative;
         overflow: hidden;
+        flex-shrink: 0;
+        height: 160px;
     }
 
     .project-card img {
         width: 100%;
-        height: 180px;
+        height: 100%;
         object-fit: cover;
         transition: transform 0.35s ease;
     }
 
     .project-card:hover img {
         transform: scale(1.04);
-    }
-
-    .project-card-featured .project-thumb img {
-        height: 100%;
     }
 
     .project-badge {
@@ -118,23 +159,75 @@ const featuredTitle = projects.reduce((a, b) =>
     }
 
     .project-body {
-        padding: 1.1rem;
+        padding: 0.85rem 1.1rem 1rem;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
     }
 
-    .gallery-dialog {
+    /* Clamped/truncated so every card's body content occupies the same
+       height regardless of how long a given project's title/context/stack
+       actually is — part of the fixed-card-size approach above. */
+    .project-body h4 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 0 0 0.4rem;
+    }
+
+    .project-context {
+        margin: 0 0 0.55rem;
+        font-size: 0.78rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .project-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        overflow: hidden;
+        max-height: 1.6rem;
+    }
+
+    .project-chip {
+        padding: 0.2rem 0.55rem;
+        font-size: 0.72rem;
+        background: rgba(31, 143, 224, 0.1);
+        color: #1f8fe0;
+    }
+
+    .project-chip-more {
+        background: rgba(21, 23, 28, 0.08);
+        color: var(--text-secondary);
+    }
+
+    /* Dialog now carries a scrollable image carousel + the full technical
+       write-up below it, so the dialog itself scrolls as one column instead
+       of being sized purely around the image like the old lightbox. */
+    .project-dialog {
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 14px;
         padding: 0;
-        max-width: min(90vw, 800px);
+        width: min(94vw, 920px);
+        max-height: 90vh;
         background: rgba(16, 19, 24, 0.92);
         backdrop-filter: blur(24px) saturate(1.4);
         box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
         color: white;
     }
 
-    .gallery-dialog::backdrop {
+    .project-dialog::backdrop {
         background: rgba(0, 0, 0, 0.55);
         backdrop-filter: blur(4px);
+    }
+
+    .project-dialog-scroll {
+        max-height: 90vh;
+        overflow-y: auto;
     }
 
     .gallery-close {
@@ -165,11 +258,12 @@ const featuredTitle = projects.reduce((a, b) =>
         position: relative;
         display: flex;
         align-items: center;
+        background: rgba(0, 0, 0, 0.25);
     }
 
     .gallery-main img {
         width: 100%;
-        max-height: 65vh;
+        max-height: 42vh;
         object-fit: contain;
         margin: 0 auto;
     }
@@ -215,9 +309,18 @@ const featuredTitle = projects.reduce((a, b) =>
         flex-wrap: wrap;
     }
 
-    .gallery-thumbs img {
-        width: 48px;
-        height: 48px;
+    /* :global() is required here — these <img> thumbnails are created via
+       document.createElement() in the script below, not authored in this
+       file's template, so Astro's scoped-style attribute (which it stamps
+       onto every element IN the template at build time) never lands on
+       them. A scoped `.gallery-thumbs img` rule silently never matches a
+       JS-created img and it falls back to its natural size — which is
+       exactly what broke this (thumbnails rendering at ~700px instead of
+       44px and pushing the write-up thousands of pixels down). Any future
+       dynamically-created element in this file needs the same treatment. */
+    .gallery-thumbs :global(img) {
+        width: 44px;
+        height: 44px;
         object-fit: cover;
         border-radius: 4px;
         cursor: pointer;
@@ -226,7 +329,7 @@ const featuredTitle = projects.reduce((a, b) =>
         transition: opacity 0.2s, border-color 0.2s;
     }
 
-    .gallery-thumbs img.active {
+    .gallery-thumbs :global(img.active) {
         opacity: 1;
         border-color: white;
     }
@@ -235,14 +338,103 @@ const featuredTitle = projects.reduce((a, b) =>
         text-align: center;
         color: #bbb;
         font-size: 0.85rem;
-        padding-bottom: 0.75rem;
+        padding: 0 1.25rem 0.75rem;
         margin: 0;
+        min-height: 1.2em;
     }
+
+    .project-detail {
+        padding: 1rem 1.5rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .project-detail-header h3 {
+        margin: 0 0 0.15rem;
+        color: white;
+    }
+
+    .project-detail-context {
+        margin: 0 0 0.85rem;
+        font-size: 0.85rem;
+        color: rgba(244, 241, 236, 0.6);
+    }
+
+    .project-detail-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.85rem;
+    }
+
+    /* Same JS-created-element scoping issue as the thumbnails above — these
+       chips are appended via document.createElement() in openProject(). */
+    .project-detail-stack :global(.chip) {
+        background: rgba(111, 208, 255, 0.14);
+        color: #8fd8ff;
+    }
+
+    .project-detail-role {
+        margin: 0 0 0.75rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 0.85rem;
+        color: rgba(244, 241, 236, 0.85);
+    }
+
+    .project-detail-role:empty,
+    .project-detail-context:empty {
+        display: none;
+    }
+
+    .project-detail-summary {
+        color: rgba(244, 241, 236, 0.75);
+        margin: 0 0 1rem;
+    }
+
+    .project-detail-highlights h4 {
+        margin: 0 0 0.6rem;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(244, 241, 236, 0.5);
+    }
+
+    .project-detail-highlights ul {
+        list-style: none;
+        margin: 0 0 1.1rem;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+
+    /* Same JS-created-element scoping issue — these <li>s are appended via
+       document.createElement() in openProject(). */
+    .project-detail-highlights :global(li) {
+        position: relative;
+        padding-left: 1.15rem;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: rgba(244, 241, 236, 0.85);
+    }
+
+    .project-detail-highlights :global(li)::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.55rem;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: linear-gradient(160deg, #6fd0ff 0%, #1f8fe0 100%);
+    }
+
 </style>
 
 <script>
     document.querySelectorAll<HTMLElement>(".work-app").forEach((root) => {
-        const dialog = root.querySelector<HTMLDialogElement>(".gallery-dialog");
+        const dialog = root.querySelector<HTMLDialogElement>(".project-dialog");
         const galleryImage = root.querySelector<HTMLImageElement>(".gallery-image");
         const galleryThumbs = root.querySelector<HTMLElement>(".gallery-thumbs");
         const galleryCaption = root.querySelector<HTMLElement>(".gallery-caption");
@@ -250,15 +442,38 @@ const featuredTitle = projects.reduce((a, b) =>
         const nextBtn = root.querySelector<HTMLButtonElement>(".gallery-next");
         const closeBtn = root.querySelector<HTMLButtonElement>(".gallery-close");
 
-        let images: string[] = [];
-        let title = "";
+        const detailTitle = root.querySelector<HTMLElement>(".project-detail-title");
+        const detailContext = root.querySelector<HTMLElement>(".project-detail-context");
+        const detailStack = root.querySelector<HTMLElement>(".project-detail-stack");
+        const detailRole = root.querySelector<HTMLElement>(".project-detail-role");
+        const detailSummary = root.querySelector<HTMLElement>(".project-detail-summary");
+        const detailHighlights = root.querySelector<HTMLElement>(".project-detail-highlights ul");
+        const scrollArea = root.querySelector<HTMLElement>(".project-dialog-scroll");
+
+        type ProjectImage = { src: string; caption: string };
+        type Project = {
+            slug: string;
+            title: string;
+            context: string;
+            stack: string[];
+            role: string;
+            repo: string;
+            summary: string;
+            highlights: string[];
+            images: ProjectImage[];
+        };
+
+        const projects: Project[] = JSON.parse(dialog?.dataset.projects ?? "[]");
+
+        let images: ProjectImage[] = [];
         let index = 0;
 
-        function render() {
+        function renderImage() {
             if (!galleryImage || !galleryCaption || !galleryThumbs) return;
-            galleryImage.src = images[index];
-            galleryImage.alt = `${title} image ${index + 1}`;
-            galleryCaption.textContent = `${index + 1} / ${images.length}`;
+            const current = images[index];
+            galleryImage.src = current?.src ?? "";
+            galleryImage.alt = current?.caption || "Project screenshot";
+            galleryCaption.textContent = current?.caption ?? "";
             galleryThumbs.querySelectorAll("img").forEach((thumb, i) => {
                 thumb.classList.toggle("active", i === index);
             });
@@ -266,24 +481,49 @@ const featuredTitle = projects.reduce((a, b) =>
             if (nextBtn) nextBtn.disabled = images.length <= 1;
         }
 
-        function openGallery(newImages: string[], newTitle: string) {
-            images = newImages;
-            title = newTitle;
+        function openProject(project: Project) {
+            images = project.images;
             index = 0;
+
             if (galleryThumbs) {
                 galleryThumbs.replaceChildren();
                 images.forEach((img, i) => {
                     const thumb = document.createElement("img");
-                    thumb.src = img;
+                    thumb.src = img.src;
                     thumb.alt = `thumbnail ${i + 1}`;
+                    thumb.loading = "lazy";
+                    thumb.decoding = "async";
                     thumb.addEventListener("click", () => {
                         index = i;
-                        render();
+                        renderImage();
                     });
                     galleryThumbs.appendChild(thumb);
                 });
             }
-            render();
+            renderImage();
+
+            if (detailTitle) detailTitle.textContent = project.title;
+            if (detailContext) detailContext.textContent = project.context;
+            if (detailStack) {
+                detailStack.replaceChildren();
+                project.stack.forEach((s) => {
+                    const chip = document.createElement("span");
+                    chip.className = "chip";
+                    chip.textContent = s;
+                    detailStack.appendChild(chip);
+                });
+            }
+            if (detailRole) detailRole.textContent = project.role ? `Role: ${project.role}` : "";
+            if (detailSummary) detailSummary.textContent = project.summary;
+            if (detailHighlights) {
+                detailHighlights.replaceChildren();
+                project.highlights.forEach((h) => {
+                    const li = document.createElement("li");
+                    li.textContent = h;
+                    detailHighlights.appendChild(li);
+                });
+            }
+            if (scrollArea) scrollArea.scrollTop = 0;
             dialog?.showModal();
         }
 
@@ -291,8 +531,8 @@ const featuredTitle = projects.reduce((a, b) =>
 
         root.querySelectorAll<HTMLButtonElement>(".project-card").forEach((card) => {
             card.addEventListener("click", () => {
-                const imgs = (card.dataset.images ?? "").split("|").filter(Boolean);
-                openGallery(imgs, card.dataset.title ?? "");
+                const project = projects.find((p) => p.slug === card.dataset.slug);
+                if (project) openProject(project);
             });
 
             if (reduceMotion) return;
@@ -310,12 +550,12 @@ const featuredTitle = projects.reduce((a, b) =>
 
         prevBtn?.addEventListener("click", () => {
             index = (index - 1 + images.length) % images.length;
-            render();
+            renderImage();
         });
 
         nextBtn?.addEventListener("click", () => {
             index = (index + 1) % images.length;
-            render();
+            renderImage();
         });
 
         closeBtn?.addEventListener("click", () => dialog?.close());
