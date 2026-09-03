@@ -357,7 +357,17 @@
     color: var(--text-secondary);
 }
 
+/* `.window` is a flex column (titlebar + this); without `flex: 1` here,
+   `.window-body` only ever grows to fit its own content, so resizing/
+   maximizing a window taller than its content left the extra space below
+   it showing `.window`'s own off-white/cream background instead of this
+   element's — a solid-color block at the bottom of any window taller than
+   what it needs. `min-height: 0` is required alongside `flex: 1` for a
+   flex child to actually respect `overflow-y: auto` and scroll internally
+   instead of forcing the flex item (and so the window) to grow to fit it. */
 .window-body {
+    flex: 1;
+    min-height: 0;
     padding: 1.5rem;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.35);
@@ -559,11 +569,17 @@
    while the pointer crosses that gap, snapping pointer-events to `none`
    mid-crossing and stranding the flyout unclickable. `.hover-open` is a JS-
    managed class (DesktopScript.astro) with a short close-delay that survives
-   the crossing instead. `:focus-within` (keyboard) and `.open` (tap/click
-   pin) have no such gap problem and stay as direct triggers. */
+   the crossing instead. `:focus-within` (keyboard) has no such gap problem
+   and stays as a direct trigger. `.open` is also JS-managed (same file) —
+   click-to-toggle was deliberately removed as redundant on desktop (hover
+   already opens it there), but touch devices have no hover at all, so the
+   trigger button re-gains a click handler specifically when `(hover: none)`
+   matches — that's what sets `.open`. Don't remove `.open` again without
+   checking; doing so breaks the flyout entirely on touch, not just makes it
+   slightly less convenient. */
 .dock-item-links.hover-open .dock-flyout,
-.dock-item-links:focus-within .dock-flyout,
-.dock-item-links.open .dock-flyout {
+.dock-item-links.open .dock-flyout,
+.dock-item-links:focus-within .dock-flyout {
     opacity: 1;
     pointer-events: auto;
     transform: translateX(-50%) translateY(0);
@@ -706,8 +722,7 @@
     height: 16px;
 }
 
-.spotlight-result:hover,
-.spotlight-result.highlighted {
+.spotlight-result:hover {
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -716,7 +731,6 @@
    essentials, windows open one at a time near-fullscreen (see
    DesktopScript.astro's isMobile()/sizeForMobile()). */
 @media (max-width: 900px), (pointer: coarse) {
-    .menu-left .menu-item[data-open],
     .hint-row {
         display: none;
     }
@@ -781,8 +795,8 @@
     }
 
     .dock-item-links.hover-open .dock-flyout,
-    .dock-item-links:focus-within .dock-flyout,
-    .dock-item-links.open .dock-flyout {
+    .dock-item-links.open .dock-flyout,
+    .dock-item-links:focus-within .dock-flyout {
         transform: translateY(-50%) translateX(0);
     }
 

@@ -15,13 +15,13 @@ import { contact } from "../../data/site.js";
     </div>
 
     <div class="contact-cta-wrap reveal-rise" style="--reveal-delay:100ms">
-        <span class="contact-cta-glow" aria-hidden="true"></span>
         <a class="btn contact-cta" href={`mailto:${contact.email}`}>
+            <span class="contact-cta-glow" aria-hidden="true"></span>
             <span
                 class="contact-cta-icon"
                 set:html='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>'
             />
-            Email {contact.email}
+            <span class="contact-cta-label">Email {contact.email}</span>
         </a>
     </div>
     <div class="contact-hint reveal-rise" style="--reveal-delay:180ms">
@@ -29,7 +29,7 @@ import { contact } from "../../data/site.js";
             class="contact-hint-icon"
             set:html='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 0 0 6 3.5l2-2a4 4 0 0 0-5.5-5.8"/><path d="M15 12a4 4 0 0 0-6-3.5l-2 2a4 4 0 0 0 5.5 5.8"/></svg>'
         />
-        <p class="text-secondary">For LinkedIn and GitHub, open the Contact Links icon in the dock.</p>
+        <p class="text-secondary">For LinkedIn and Email, open the Contact Links icon in the dock.</p>
     </div>
 </div>
 
@@ -63,11 +63,16 @@ import { contact } from "../../data/site.js";
     }
 
     .contact-cta-wrap {
-        position: relative;
         display: inline-block;
         margin-top: 1.5rem;
     }
 
+    /* Positioned relative to `.contact-cta` (its actual parent, since a
+       markup change) rather than `.contact-cta-wrap` — needed so the glow
+       hugs the button's real size even when it wraps onto two lines on
+       mobile. Being an in-flow sibling of the icon/label spans is fine even
+       though it's `position: absolute` and empty: it doesn't affect the
+       flex layout of its siblings. */
     .contact-cta-glow {
         position: absolute;
         inset: -10px;
@@ -90,13 +95,28 @@ import { contact } from "../../data/site.js";
     }
 
     .contact-cta {
+        position: relative;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
+        max-width: 100%;
         background: linear-gradient(160deg, #6fe0a0 0%, #1fa35f 100%);
         color: white;
         box-shadow: 0 6px 16px rgba(31, 163, 95, 0.3);
         transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+
+    /* Wraps the email onto a second line instead of overflowing once the
+       label + full address don't fit the button's available width — needed
+       specifically on mobile, where the window itself is much narrower
+       (see sizeForMobile() in DesktopScript.astro) than the ~560px desktop
+       default, leaving too little room for "Email <address>" on one line.
+       `min-width: 0` is required for a flex item's content to actually
+       shrink/wrap instead of the flex algorithm defaulting to its
+       max-content (unwrapped) size and overflowing the button. */
+    .contact-cta-label {
+        min-width: 0;
+        overflow-wrap: break-word;
     }
 
     .contact-cta:hover {
@@ -144,5 +164,24 @@ import { contact } from "../../data/site.js";
     .contact-hint-icon svg {
         width: 14px;
         height: 14px;
+    }
+
+    /* Mobile windows are much narrower than desktop's (sizeForMobile() in
+       DesktopScript.astro), so the CTA sat flush against the left edge with
+       a lot of empty space to its right instead of looking centered — this
+       centers it as a whole. `display: flex` (not `table`) is deliberate:
+       `display: table` was tried first and doesn't work here — table
+       auto-layout treats its content's unwrapped (max-content) width as a
+       hard floor and ignores `max-width` rather than let a cell's content
+       reflow/wrap, so the button never actually shrank and stayed
+       overflowing. A flex container has no such floor — its child
+       (`.contact-cta`, with its own `max-width: 100%`) genuinely shrinks
+       and the email wraps onto a second line via `.contact-cta-label`'s
+       `min-width: 0`, below. */
+    @media (max-width: 900px), (pointer: coarse) {
+        .contact-cta-wrap {
+            display: flex;
+            justify-content: center;
+        }
     }
 </style>

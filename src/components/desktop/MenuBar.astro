@@ -1,5 +1,4 @@
 ---
-import { apps } from "../../data/apps.js";
 ---
 
 <div class="menu-bar">
@@ -7,27 +6,19 @@ import { apps } from "../../data/apps.js";
         <div class="menu-left">
             <span class="menu-logo" aria-hidden="true"></span>
             <span class="brand">Diehan Drotschie</span>
-            {
-                apps.map((app) => (
-                    <button type="button" class="menu-item" data-open={app.id}>
-                        {app.title}
-                    </button>
-                ))
-            }
         </div>
         <div class="menu-right">
             <button type="button" class="menu-item" id="spotlight-trigger" aria-label="Search">
-                <kbd>⌘K</kbd> Search
+                <kbd class="mod-key" data-key="K">⌘K</kbd> Search
             </button>
             <span class="clock" id="menu-clock"></span>
         </div>
     </div>
     <div class="hint-row">
-        <span><kbd>⌘K</kbd> Search</span>
-        <span><kbd>⌘C</kbd> Contact</span>
-        <span><kbd>?</kbd> Help</span>
+        <span><kbd class="mod-key" data-key="K">⌘K</kbd> Search</span>
+        <span><kbd class="mod-key" data-key="C">⌘C</kbd> Contact</span>
         <span class="hint-fill" />
-        <span>© 2026 Diehan Drotschie · Static Astro build, no backend, no tracking</span>
+        <span>© 2026 Diehan Drotschie · Built using Astro and CSS</span>
     </div>
 </div>
 

@@ -136,7 +136,7 @@ relevant to a software engineer's CV. Screenshots are duplicated into
 can't be referenced directly).
 
 Current project list (in display order — see `projects.js` for why): Propagen
-Website, Bar Valley Properties (Propagen client site), E-Spaza (CS344), InkLink
+Website, Real Estate Website (Propagen client site), E-Spaza (CS344), InkLink
 (CS343), Instagram Clone, Gomoku AI Player (CS314), DFA-Based Image Compression
 (CS214), Moving Maze (CS144), Impasse (CS114), Wedding Table Allocation.
 

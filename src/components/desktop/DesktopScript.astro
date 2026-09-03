@@ -260,6 +260,27 @@ const appMeta = apps
         window.setTimeout(() => win.classList.remove("bounds-animating"), 300);
     }
 
+    // Shared by titlebar dragging and every resize handle below — both are
+    // "follow the pointer from mousedown to mouseup" gestures that otherwise
+    // duplicated the same boilerplate. Attaching the mousemove/mouseup pair
+    // only for the duration of one drag (instead of once per handle, always
+    // listening) also matters at scale here: with 8 resize handles per
+    // window, a permanently-attached pair per handle would mean dozens of
+    // idle `window`-level listeners doing an early-return check on every
+    // mouse move across the whole page, for every window that exists.
+    function trackPointer(onMove, onUp) {
+        function move(e) {
+            onMove(e);
+        }
+        function up(e) {
+            window.removeEventListener("mousemove", move);
+            window.removeEventListener("mouseup", up);
+            onUp?.(e);
+        }
+        window.addEventListener("mousemove", move);
+        window.addEventListener("mouseup", up);
+    }
+
     function maximizeWindow(id) {
         const win = getWindow(id);
         if (!win || isMobile() || win.style.display !== "flex") return;
@@ -312,19 +333,29 @@ const appMeta = apps
         });
     });
 
-    // Contact Links dock flyout — click/tap support so it also works on touch
-    // (which has no hover) and is easy to verify since it doesn't depend on
-    // synthetic pointer hover state.
+    // Contact Links dock flyout. Hover-only on desktop by design (see
+    // desktop.css's `.hover-open` comment) — click-to-toggle was removed
+    // there as redundant next to hover. But touch devices have no hover at
+    // all, so a hover-only trigger left the flyout completely unreachable
+    // on mobile (confirmed: tapping did nothing, not even a flash). Click
+    // is re-added here, gated to `(hover: none)` so it only ever fires on
+    // devices that have no other way to open the flyout — desktop mice
+    // still get click-does-nothing, hover-to-open exactly as before.
+    const noHover = window.matchMedia("(hover: none)").matches;
+
     document.querySelectorAll(".dock-item-links").forEach((item) => {
         const trigger = item.querySelector(".dock-trigger");
-        trigger?.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const isOpen = item.classList.contains("open");
-            document
-                .querySelectorAll(".dock-item-links.open")
-                .forEach((el) => el.classList.remove("open"));
-            item.classList.toggle("open", !isOpen);
-        });
+
+        if (noHover) {
+            trigger?.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const isOpen = item.classList.contains("open");
+                document
+                    .querySelectorAll(".dock-item-links.open")
+                    .forEach((el) => el.classList.remove("open"));
+                item.classList.toggle("open", !isOpen);
+            });
+        }
 
         // Hover, with a debounced close instead of raw CSS :hover. The
         // flyout sits 14px above the dock icon with nothing rendered in
@@ -349,10 +380,23 @@ const appMeta = apps
             hoverCloseTimer = window.setTimeout(() => {
                 item.classList.remove("hover-open");
                 hoverCloseTimer = null;
+                // A click focuses the trigger natively (it's a <button>),
+                // and `:focus-within` is also part of the CSS rule that
+                // shows the flyout (kept for keyboard/tab users) — without
+                // this the flyout would keep it open on-screen after the
+                // mouse leaves, only closing once something else is
+                // clicked, since focus alone was enough to satisfy the
+                // `:focus-within` half of that CSS rule.
+                if (item.contains(document.activeElement)) trigger?.blur();
             }, 250);
         });
     });
 
+    // Touch has no mouseleave to auto-close the flyout once `.open`, so a
+    // tap anywhere outside it needs to close it explicitly — otherwise it
+    // stays open on-screen until the visitor happens to tap the trigger
+    // again. Desktop's hover-close (above) already handles its own case and
+    // never sets `.open`, so this is a no-op there.
     document.addEventListener("click", (e) => {
         document.querySelectorAll(".dock-item-links.open").forEach((item) => {
             if (!item.contains(e.target)) item.classList.remove("open");
@@ -385,56 +429,45 @@ const appMeta = apps
         });
 
         if (titlebar) {
-            let dragging = false;
-            let startX = 0;
-            let startY = 0;
-            let startLeft = 0;
-            let startTop = 0;
-
             titlebar.addEventListener("mousedown", (e) => {
                 if (isMobile() || e.target.closest(".window-dot")) return;
-                dragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                startLeft = win.offsetLeft;
-                startTop = win.offsetTop;
+                let startX = e.clientX;
+                let startY = e.clientY;
+                let startLeft = win.offsetLeft;
+                let startTop = win.offsetTop;
                 focusWindow(win);
                 e.preventDefault();
+
+                trackPointer((e) => {
+                    // Dragging a maximized window un-maximizes it first, like
+                    // macOS — restore its pre-maximize size so the drag
+                    // doesn't start by dragging the full-desktop-sized window
+                    // around.
+                    if (id && maximizedIds.has(id)) {
+                        maximizedIds.delete(id);
+                        win.classList.remove("maximized", "bounds-animating");
+                        const bounds = restoreBounds.get(id);
+                        const width = bounds?.width ?? win.offsetWidth;
+                        const height = bounds?.height ?? win.offsetHeight;
+                        win.style.width = `${width}px`;
+                        win.style.height = `${height}px`;
+                        startLeft = e.clientX - width / 2;
+                        startTop = 40;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                    }
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    const maxLeft = window.innerWidth - 120;
+                    const maxTop = window.innerHeight - 60;
+                    win.style.left = `${Math.min(Math.max(0, startLeft + dx), maxLeft)}px`;
+                    win.style.top = `${Math.min(Math.max(32, startTop + dy), maxTop)}px`;
+                });
             });
 
             titlebar.addEventListener("dblclick", (e) => {
                 if (isMobile() || e.target.closest(".window-dot")) return;
                 if (id) maximizeWindow(id);
-            });
-
-            window.addEventListener("mousemove", (e) => {
-                if (!dragging) return;
-                // Dragging a maximized window un-maximizes it first, like macOS —
-                // restore its pre-maximize size so the drag doesn't start by
-                // dragging the full-desktop-sized window around.
-                if (id && maximizedIds.has(id)) {
-                    maximizedIds.delete(id);
-                    win.classList.remove("maximized", "bounds-animating");
-                    const bounds = restoreBounds.get(id);
-                    const width = bounds?.width ?? win.offsetWidth;
-                    const height = bounds?.height ?? win.offsetHeight;
-                    win.style.width = `${width}px`;
-                    win.style.height = `${height}px`;
-                    startLeft = e.clientX - width / 2;
-                    startTop = 40;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                }
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                const maxLeft = window.innerWidth - 120;
-                const maxTop = window.innerHeight - 60;
-                win.style.left = `${Math.min(Math.max(0, startLeft + dx), maxLeft)}px`;
-                win.style.top = `${Math.min(Math.max(32, startTop + dy), maxTop)}px`;
-            });
-
-            window.addEventListener("mouseup", () => {
-                dragging = false;
             });
         }
 
@@ -443,23 +476,15 @@ const appMeta = apps
         const MIN_HEIGHT = 220;
         win.querySelectorAll(".resize-handle").forEach((handle) => {
             const edge = handle.getAttribute("data-edge") ?? "";
-            let resizing = false;
-            let startX = 0;
-            let startY = 0;
-            let startLeft = 0;
-            let startTop = 0;
-            let startWidth = 0;
-            let startHeight = 0;
 
             handle.addEventListener("mousedown", (e) => {
                 if (isMobile()) return;
-                resizing = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                startLeft = win.offsetLeft;
-                startTop = win.offsetTop;
-                startWidth = win.offsetWidth;
-                startHeight = win.offsetHeight;
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startLeft = win.offsetLeft;
+                const startTop = win.offsetTop;
+                const startWidth = win.offsetWidth;
+                const startHeight = win.offsetHeight;
                 if (id && maximizedIds.has(id)) {
                     maximizedIds.delete(id);
                     win.classList.remove("maximized", "bounds-animating");
@@ -467,36 +492,31 @@ const appMeta = apps
                 focusWindow(win);
                 e.preventDefault();
                 e.stopPropagation();
-            });
 
-            window.addEventListener("mousemove", (e) => {
-                if (!resizing) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                let left = startLeft;
-                let top = startTop;
-                let width = startWidth;
-                let height = startHeight;
+                trackPointer((e) => {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    let left = startLeft;
+                    let top = startTop;
+                    let width = startWidth;
+                    let height = startHeight;
 
-                if (edge.includes("e")) width = Math.max(MIN_WIDTH, startWidth + dx);
-                if (edge.includes("s")) height = Math.max(MIN_HEIGHT, startHeight + dy);
-                if (edge.includes("w")) {
-                    width = Math.max(MIN_WIDTH, startWidth - dx);
-                    left = startLeft + (startWidth - width);
-                }
-                if (edge.includes("n")) {
-                    height = Math.max(MIN_HEIGHT, startHeight - dy);
-                    top = Math.max(32, startTop + (startHeight - height));
-                }
+                    if (edge.includes("e")) width = Math.max(MIN_WIDTH, startWidth + dx);
+                    if (edge.includes("s")) height = Math.max(MIN_HEIGHT, startHeight + dy);
+                    if (edge.includes("w")) {
+                        width = Math.max(MIN_WIDTH, startWidth - dx);
+                        left = startLeft + (startWidth - width);
+                    }
+                    if (edge.includes("n")) {
+                        height = Math.max(MIN_HEIGHT, startHeight - dy);
+                        top = Math.max(32, startTop + (startHeight - height));
+                    }
 
-                win.style.left = `${left}px`;
-                win.style.top = `${top}px`;
-                win.style.width = `${width}px`;
-                win.style.height = `${height}px`;
-            });
-
-            window.addEventListener("mouseup", () => {
-                resizing = false;
+                    win.style.left = `${left}px`;
+                    win.style.top = `${top}px`;
+                    win.style.width = `${width}px`;
+                    win.style.height = `${height}px`;
+                });
             });
         });
     });
@@ -566,7 +586,26 @@ const appMeta = apps
         if (e.target instanceof HTMLInputElement) filterResults(e.target.value);
     });
 
+    // "⌘" only makes sense on an actual Mac keyboard — everyone else (the
+    // vast majority of visitors, given this is a portfolio) uses Ctrl for
+    // the same shortcuts. iPhone/iPad report "Macintosh"-adjacent strings in
+    // some UA forms too, so explicitly excluded — they don't have a Command
+    // key either. Runs once on load; a brief flash of "⌘" before this swaps
+    // the text is an acceptable tradeoff for a decorative hint (same as the
+    // clock's blank first frame).
+    const isRealMac = /Macintosh/.test(navigator.userAgent) && !/iPhone|iPad|iPod/.test(navigator.userAgent);
+    if (!isRealMac) {
+        document.querySelectorAll(".mod-key").forEach((el) => {
+            el.textContent = `Ctrl+${el.getAttribute("data-key") ?? ""}`;
+        });
+    }
+
     document.addEventListener("keydown", (e) => {
+        const target = e.target;
+        const isTyping =
+            target instanceof HTMLElement &&
+            (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
             e.preventDefault();
             if (overlay?.classList.contains("open")) {
@@ -575,11 +614,25 @@ const appMeta = apps
                 openSpotlight();
             }
         }
+        // Ctrl/Cmd+C is also the universal "copy" shortcut — only treat it as
+        // "open Contact" when there's no text selected and the visitor isn't
+        // typing/focused in a field, so copying a selected email address or
+        // any other page text still works normally instead of being hijacked.
+        if (
+            (e.metaKey || e.ctrlKey) &&
+            e.key.toLowerCase() === "c" &&
+            !isTyping &&
+            !window.getSelection()?.toString()
+        ) {
+            e.preventDefault();
+            closeSpotlight();
+            openWindow("contact");
+        }
         if (e.key === "Escape") {
             closeSpotlight();
             document
-                .querySelectorAll(".dock-item-links.open, .dock-item-links.hover-open")
-                .forEach((el) => el.classList.remove("open", "hover-open"));
+                .querySelectorAll(".dock-item-links.hover-open, .dock-item-links.open")
+                .forEach((el) => el.classList.remove("hover-open", "open"));
         }
     });
 

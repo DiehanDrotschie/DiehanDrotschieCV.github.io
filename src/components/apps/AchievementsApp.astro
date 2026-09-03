@@ -6,8 +6,6 @@ const icons = {
         '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
     academic:
         '<path d="M12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.6 5.8 21 7 14 2 9.3 9 8.5Z"/>',
-    culture:
-        '<path d="M4 7h4v6a4 4 0 0 1-4-4Z"/><path d="M20 7h-4v6a4 4 0 0 0 4-4Z"/><path d="M8 4h8v9a4 4 0 0 1-8 0Z"/><path d="M12 17v3"/><path d="M9 21h6"/>',
     sports:
         '<circle cx="12" cy="8" r="5"/><path d="M8.2 12.6 6.5 21l5.5-3 5.5 3-1.7-8.4"/>',
 };
@@ -49,16 +47,6 @@ const markTier = (mark) => {
             </ul>
         </div>
         <div class="card trophy-card trophy-side reveal-rise" style="--reveal-delay:180ms">
-            <div class="trophy-section">
-                <div class="trophy-header">
-                    <span class="trophy-icon trophy-icon-sm" set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons.culture}</svg>`} />
-                    <h4>Culture</h4>
-                </div>
-                <ul class="trophy-list">
-                    {achievements.culture.map((item) => <li>{item}</li>)}
-                </ul>
-            </div>
-            <div class="trophy-section-divider"></div>
             <div class="trophy-section">
                 <div class="trophy-header">
                     <span class="trophy-icon trophy-icon-sm" set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons.sports}</svg>`} />
@@ -143,6 +131,30 @@ const markTier = (mark) => {
         overflow-x: auto;
     }
 
+    /* Fixed layout + shared column widths so "Mark" lands at the same x
+       position in every year's table, instead of each table auto-sizing its
+       Subject column to its own longest subject name. */
+    .table-scroll table {
+        table-layout: fixed;
+        width: 100%;
+        min-width: 420px;
+    }
+
+    .table-scroll th:first-child,
+    .table-scroll td:first-child {
+        width: 55%;
+    }
+
+    .table-scroll th:nth-child(2),
+    .table-scroll td:nth-child(2) {
+        width: 20%;
+    }
+
+    .table-scroll th:last-child,
+    .table-scroll td:last-child {
+        width: 25%;
+    }
+
     .trophy-card {
         display: flex;
         flex-direction: column;
@@ -159,16 +171,6 @@ const markTier = (mark) => {
 
     .trophy-side {
         gap: 0;
-    }
-
-    .trophy-section-divider {
-        height: 1px;
-        margin: 1rem 0;
-        background: linear-gradient(
-            to right,
-            rgba(242, 169, 0, 0.25),
-            rgba(242, 169, 0, 0.02)
-        );
     }
 
     .trophy-stat {

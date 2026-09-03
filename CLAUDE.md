@@ -1084,6 +1084,959 @@ the one-off script and its dependency were) — so the browser prioritizes the
 image the user is actually looking at over the off-screen-ish thumbnail
 strip.
 
+## Menu bar simplified: name only, no app nav buttons (2026-08-20)
+
+User asked to remove the About/Skills/Portfolio/etc. text buttons from the
+left side of the menu bar, keeping only the name. `MenuBar.astro` no longer
+imports `apps.js` or maps over it — `.menu-left` is now just the logo dot +
+`Diehan Drotschie` brand text, nothing else. The now-dead mobile CSS rule
+hiding those buttons (`.menu-left .menu-item[data-open]` in the
+`@media (max-width: 900px)` block in `desktop.css`) was removed too, since
+there's nothing left for it to target.
+**Navigation is unaffected** — the Dock and ⌘K Spotlight search are still the
+way to open any window; this only removed the *redundant* top-bar text-button
+shortcut to the same windows. `.menu-bar button.menu-item` base styling is
+still used by the Search trigger on the right side, so that CSS rule stays.
+If asked to bring per-app nav back to the menu bar, it's a straightforward
+revert: re-add the `apps.js` import + `.map()` loop that was removed here.
+
+**Housekeeping note**: the parent folder this repo lives in was renamed from
+`CV_Website` to `Diehan_CV` between sessions (still
+`.../Dev/Diehan_CV/DiehanDrotschieCV.github.io`, same git repo/remote/branch
+— confirmed via `git remote -v` before touching anything). Nothing in the
+repo itself referenced the old parent folder name, so this needed no code
+changes, just noting it here in case a future session's memory/notes still
+say `CV_Website`.
+
+## Menu bar shortcuts: OS-correct labels + Contact made functional (2026-08-20)
+
+User (on Windows) pointed out the hint row showed `⌘C`/`⌘K` (Mac-only Command
+key symbol) and that the Contact and Help hints didn't actually do anything —
+only ⌘/Ctrl+K (Spotlight) was ever wired up.
+
+- **OS-correct labels**: every relevant `<kbd>` (hint row's Search/Contact and
+  the Search trigger button's badge) has class `mod-key` + `data-key="K"`/`"C"`,
+  starting as `⌘K`/`⌘C` in the markup. A script in `DesktopScript.astro` checks
+  `navigator.userAgent` for `Macintosh` (excluding iPhone/iPad/iPod, which
+  report Mac-adjacent strings but have no physical Command key) and rewrites
+  every `.mod-key` element to `Ctrl+<key>` for everyone else. Verified on this
+  Windows dev machine: all `.mod-key` elements correctly read `Ctrl+K`/`Ctrl+C`.
+  A brief flash of `⌘` before the script runs is an accepted tradeoff (same
+  class of thing as the clock's blank first frame) — this can't be known at
+  Astro's static-render time, only client-side.
+- **Ctrl/Cmd+C now opens Contact** — but **only** when there's no active text
+  selection and the visitor isn't focused in an input/textarea/contenteditable
+  (`isTyping` check). Ctrl/Cmd+C is the universal browser "copy" shortcut;
+  without this guard, a visitor selecting the email address (or any page
+  text) and hitting copy would have gotten a Contact window popping open
+  instead of an actual copy. **Don't remove this guard** if touching this
+  again — it's not defensive boilerplate, it's the thing that keeps this
+  shortcut from being actively hostile to normal browser use.
+- Verified end-to-end in the Browser pane: dispatching Ctrl+C opens the
+  Contact window. The "does Ctrl+C skip when text is selected" half of the
+  guard couldn't be verified end-to-end here — `window.getSelection()`
+  doesn't reliably persist across synthetic events in this sandboxed pane —
+  but the guard condition itself (`!window.getSelection()?.toString()`) is a
+  standard, correct pattern; noted as unverified-by-test rather than claimed
+  as confirmed.
+
+**Help panel removed same day**: a `?` → Help panel (new `HelpOverlay.astro`
+component, listing shortcuts + usage tips) was built and wired up right after
+the above, then the user said it wasn't necessary. Fully removed —
+`HelpOverlay.astro` deleted, its import/usage in `index.astro` reverted, the
+`? Help` hint-row entry in `MenuBar.astro` removed, and all Help-related JS
+(`helpOverlay`/`helpClose`, `openHelp`/`closeHelp`, the `?` keydown branch,
+`closeHelp()` calls in the Escape/Ctrl+C branches) removed from
+`DesktopScript.astro`. **Don't re-add a Help panel unless the user asks again**
+— this isn't a case of "still there but hidden," it's fully gone from the
+codebase. (Transient note: deleting the component file while the dev server's
+HMR was still tracking it produced two harmless 500s in that dev session's
+console — resolved by a fresh page load/tab; not a real bug, nothing to
+chase if it's ever seen again after a file deletion mid-session.)
+
+## Copyright line updated (2026-08-20)
+
+`MenuBar.astro`'s hint-row copyright changed from "© 2026 Diehan Drotschie ·
+Static Astro build, no backend, no tracking" to "© 2026 Diehan Drotschie ·
+Built using Astro and CSS" per the user's explicit wording.
+
+## Project image lightbox: fullscreen zoom + pan controls (2026-08-25)
+
+Added a "view full size" fullscreen lightbox to `WorkApp.astro`'s project
+carousel, then extended it with proper zoom controls per a follow-up request:
+
+- A zoom button (⛶, `.gallery-zoom`) in the corner of the main carousel image,
+  plus the main image itself is now clickable — both open `.lightbox`, a
+  fullscreen `<dialog>` showing the current image at "fit to screen" size
+  with prev/next nav (kept in sync with the underlying carousel's `index`),
+  caption, and close (close button, backdrop click, or Escape — the last one
+  free from `<dialog>`'s native behavior, no extra JS needed).
+- Zoom controls: a small pill-shaped control panel (`.lightbox-zoom-controls`,
+  bottom-right) with − / % / + . Zoom is relative to the fit-to-screen view
+  (100%), not native pixel size — `computeBaseSize()` measures that
+  fit-to-screen width/height from `naturalWidth`/`naturalHeight` once the
+  image loads, and zoom (100%–400% in 25% steps) multiplies it via an inline
+  pixel `width`/`height` on `.lightbox-image`. At zoom > 1 the
+  `.lightbox-viewport` wrapper gets `overflow: auto` and an `.is-zoomed`
+  class, so panning is just native scrolling — a mousedown/mousemove/mouseup
+  drag handler on the viewport adjusts `scrollLeft`/`scrollTop` (grab/grabbing
+  cursor). Switching images (prev/next) resets zoom to 100%.
+- Verified in the sandboxed Browser pane via direct JS state checks (per the
+  usual pattern here — compositor-driven visual checks aren't reliable in this
+  tool): confirmed 100% baseline, step-in to 150%/175% updates both the label
+  and the image's inline px width, `.is-zoomed` toggles correctly, zoom-out
+  hits a disabled floor at 100%, and navigating to the next image resets to
+  100% with `.is-zoomed` removed.
+
+## Contact Links dock icon: click now does nothing, hover-only (2026-08-25)
+
+The Contact Links dock item (LinkedIn/Email flyout) used to support both
+hover-to-open AND click-to-pin-open (`.open` class, toggled in
+`DesktopScript.astro`, closed on outside click or Escape). The user said the
+click behavior was unwanted — hover already does the job, so a click should
+do nothing. Removed the click-to-toggle listener on `.dock-trigger` entirely
+(and its now-dead `.open` class plumbing: the outside-click-close listener,
+the Escape handler's `.open` cleanup, and the `.dock-item-links.open
+.dock-flyout` CSS rule in both the desktop and mobile media-query blocks of
+`desktop.css`). The flyout now opens only via `.hover-open` (JS-managed hover
+with a 250ms close-debounce, unchanged) or `:focus-within` (keyboard). Don't
+re-add click-to-pin without checking — this was a deliberate removal per
+explicit user feedback, not an oversight.
+
+**Follow-up bug from that removal, fixed same day**: after removing the click
+handler, the flyout stayed open until the user clicked *elsewhere* instead of
+closing when the mouse left it. Cause: the trigger `<button>` still gets
+native focus on click, and the CSS rule that shows `.dock-flyout` is
+`.hover-open` OR `:focus-within` — so once `hover-open` cleared on
+mouseleave, `:focus-within` alone (from that leftover click-focus) kept it
+open until focus moved elsewhere. Fixed by blurring the trigger inside the
+existing mouseleave close-timer (only if focus is still inside `item`), so
+`:focus-within` releases at the same time `hover-open` clears. `:focus-within`
+itself is untouched — real keyboard/tab users still get it.
+
+## Achievements: university table columns aligned across all 3 years (2026-08-25)
+
+The `Mark` column in `AchievementsApp.astro`'s three per-year university
+tables landed at a different x-position in each table, because each
+`<table>` auto-sized its own `Subject` column width to its own longest
+subject name (independent of the other tables). Fixed with `table-layout:
+fixed` + explicit shared column widths (Subject 55% / Mark 20% / Remarks
+25%) in `.table-scroll table` in that file's `<style>` block, so all three
+tables now share identical column boundaries regardless of content length.
+Verified via `getBoundingClientRect()` on each table's Mark `<th>` — all
+three now report the same `left`/`width`.
+
+## Resume PDF: trailing blank page removed (2026-08-25)
+
+`public/DiehanCV.pdf` had a 3rd, fully blank page after the 2-page CV
+content. Removed it with a one-off `pdf-lib` script run from the scratch
+directory (installed via `npm install pdf-lib --no-save` in a scratch
+folder, never touched this repo's `package.json`/`node_modules` — same
+"one-off tool, remove after" pattern as the earlier image-optimization
+script) — loaded the PDF, called `removePage(2)`, re-saved in place. Went
+from 198.5KB/3 pages to 179.6KB/2 pages; content of pages 1–2 unchanged
+(verified by re-reading the PDF after the edit). The scratch npm project was
+deleted after the one-time run.
+
+## Propagen/real-estate screenshots: restored native width, fixed zoom blur (2026-08-25)
+
+User reported the Propagen and Bar Valley Properties (real estate) project
+screenshots looked blurry when zoomed in via the lightbox. Root cause: the
+original one-off image-compression pass (see "23MB→4.3MB" note above) used
+`sharp(...).resize({ fit: "inside", width: W, height: H })` — for `fit:
+"inside"`, BOTH caps apply proportionally, so a very tall full-page capture
+(these are scrolling-capture screenshots, up to 8800px tall) got its WIDTH
+crushed down to fit inside the height cap, not just its height. Concretely:
+`propagen-website/04-showcase.png` went from a native 1440×8800 down to a
+served 393×2400 — under a third of its real width — while normal-aspect
+screenshots (hero shots etc.) were barely touched. Zooming into a
+393px-wide image inevitably looks soft; there was no more resolution left
+to reveal.
+
+Fixed by re-deriving the 5 affected files from the untouched, full-resolution
+originals in `ProjectsScreenshotsAndInfo/` (that folder is the canonical
+source, `public/Projects/` is a derived/compressed copy — see the Work app
+rebuild notes) using a **width-only** cap this time (`resize({ width: 1600,
+withoutEnlargement: true })`, no height constraint) plus PNG palette
+quantization (`.png({ quality: 82, palette: true, effort: 10 })`) instead of
+downscaling for size control:
+
+- `propagen-website/02-home-full.png`: 399×2400 → 1440×8657 (157KB→524KB)
+- `propagen-website/03-pricing.png`: 755×2400 → 1440×4580 (171KB→358KB)
+- `propagen-website/04-showcase.png`: 393×2400 → 1440×8800 (146KB→595KB)
+- `propagen-client-website-template/02-home-full.png`: 872×2400 → 1440×3965 (317KB→440KB)
+- `propagen-client-website-template/05-about.png`: 1297×2400 → 1440×2665 (183KB→106KB)
+
+`public/Projects/` total went from ~4.3MB to ~6.6MB — still far below the
+original 23MB, and images only load when a project card is opened (lazy
+thumbnails + on-demand main image), so this shouldn't reintroduce the
+scroll-lag issue those were fixed for. Verified via `naturalWidth` on the
+loaded `<img>` in-browser (1440 as expected, was 393). Used the same
+scratch-directory + `npm install --no-save` + delete-after pattern as the
+original compression script and the PDF page-removal fix — nothing added to
+this repo's `package.json`.
+
+If more projects' tall screenshots ever look soft when zoomed, the same fix
+applies: check `Image.open(...).size` on the `public/Projects/...` file vs.
+the same path under `ProjectsScreenshotsAndInfo/...` — if the served width
+is meaningfully smaller than the original, it got squeezed by the height cap
+and needs the same width-only re-derivation.
+
+## Resume PDF fully rebuilt from site data (2026-08-26)
+
+`public/DiehanCV.pdf` was the *original* CV template from before this whole
+Astro rebuild — it still had the old "Personal Information" block (Age,
+Criminal Record, Gender, Nationality — none of which the website shows
+anymore; `about.facts` moved to Location/Role/Focus early in this project)
+and a phone number (`contact.phone` was removed from the site outright, see
+above), plus an old, thin project list (Tic Tac Toe, Plinko, etc.) that
+predates the 10-project `projects.js` rebuild. The user clarified that
+`Diehan_CV/DiehanCV.pdf` (one level **above** this repo, not in it) is their
+own personal backup copy and NOT the file to touch — `public/DiehanCV.pdf`
+inside this repo is "the actual pdf in the website" they meant.
+
+Rebuilt it from scratch to mirror current site data (`src/data/site.js` +
+`src/data/projects.js`): Summary, Experience (all 3 roles, condensed to
+bullets), Skills (grouped exactly like `SkillsApp.astro`'s 5 groups —
+Languages / Frameworks & Tools / Cloud (AWS) / Automation / Agile &
+Collaboration), all 10 Projects (title, stack, one-line summary each — no
+university/course mentions, matching the site's project cards), Achievements
+(Professional bullets + a condensed Academic list — dropped the Sport/Culture
+categories and the full 24-course per-year marks tables for a tighter,
+job-focused 2-page resume; flag to the user if they want those back), and
+Education (BSc CS Stellenbosch + Senior Certificate, dates only, no marks
+breakdown). Removed: Personal Information block, phone number.
+
+Built via a scratch HTML file styled to match the site's blue accent
+(`#1f8fe0`), rendered to PDF with a **local headless Chrome** print
+(`chrome.exe --headless --disable-gpu --print-to-pdf=... "file:///<url-encoded
+path>"` — no npm dependency needed this time, unlike the sharp/pdf-lib
+one-offs). Two gotchas hit along the way: a bare relative filename argument
+gets treated as a hostname to DNS-resolve (`DNS_PROBE_FINISHED_NXDOMAIN`), and
+an unescaped space in the `file://` path 404s — needs `file:///` + `%20` for
+spaces in a fully-qualified path. Verified by reading the rendered PDF back
+and comparing every section to source data.
+
+**Revised same day per follow-up feedback** — three changes, all now live:
+1. Summary rewritten so the degree isn't a blunt standalone sentence — now
+   opens with it as a clause ("Software Developer at Games Global with a BSc
+   in Computer Science (Data Science) from Stellenbosch University, now
+   putting that foundation to work...") instead of interrupting the flow.
+2. The Personal Information block (Age/Gender/Nationality/Criminal Record)
+   from the original pre-rebuild PDF is back — Gender/Nationality/Criminal
+   Record carried over unchanged, but Age needed asking the user directly
+   (the old PDF's "21 yrs" was stale and there's no way to derive current age
+   from anything in this repo) — confirmed as 22.
+3. "Accomplishments & Awards" restored to its full original scope: the
+   Academic list is back to all 8 original bullets (Dux Award, Top 10
+   Achievers, Student Council, 5-years honorary awards, 1st in Grade,
+   SA Maths Olympiad, Golden Key, 94.57% average) plus the Culture (CSV Team
+   Leader) and Sport (Hockey/Athletics/Swimming) categories that the first
+   rebuild had dropped for brevity — turns out "keep minimal" meant trim the
+   marks tables and project write-ups, not the awards themselves. The new
+   Professional achievements section (from the website) stays alongside it,
+   not instead of it. The 24-course per-year marks tables are still
+   intentionally excluded (never in any version of this PDF, only ever
+   lived in the website's Achievements app) — don't add those without
+   checking, that's the one thing still deliberately out of scope.
+
+Now 2 pages, ~97KB.
+
+**Experience order flipped same day**: user wants the PDF's Experience section
+oldest→latest (Internship → Graduate → Level 1) — reordered the PDF's HTML
+to match. **Correction from a later sync audit**: this note originally
+(wrongly) claimed the website was newest-first and this made the PDF diverge
+from it — that was false. `site.js`'s `experience` array was already ordered
+oldest→latest (Internship, Graduate, Level 1) before this change, and
+`ExperienceApp.astro` renders it in array order with no reversal — so the
+website was already oldest-first, same as the PDF now is. There was no
+actual divergence to create or preserve here; ignore the "opposite of
+newest-first" framing in the original version of this note. ~97KB, still 2
+pages.
+
+**Also fixed the same day, in both `site.js` and the PDF**: `achievements.sports`
+had "Hockey: 0/19 A First Team" — the `0` was a typo/OCR artifact from the
+original pre-rebuild PDF for "U/19" (Under-19). Corrected to "U/19" in both
+places. Checked at the same time: every accomplishment from the old PDF's
+"Accomplishments and Awards" (all 8 Academic bullets, Culture, Sport, the
+Stellenbosch runner-up honor) was already mirrored on the website's
+Achievements app before this fix — nothing else was missing.
+
+**Two Experience bullets pulled back in from the pre-rebuild PDF, condensed**
+(user quoted the exact old sentences and asked for them worked back in):
+- Internship bullet now reads "Collaborated with a talented team on
+  interactive gameplay features, gaining valuable hands-on experience in
+  game development" — folds in the old PDF's "collaborated with a talented
+  team" phrase that the rebuilt version had dropped, summarized to one line
+  per the user's own instruction.
+- Graduate bullet gained a new middle line: "Responsibilities included
+  developing backend services for multiple games and creating an in-house
+  AWS cloud solution with an internal web platform for running game
+  simulations" — near-verbatim from the old PDF, since the user quoted that
+  exact sentence and asked for it included as-is (not further condensed,
+  unlike the internship one). Still 2 pages, ~98KB.
+
+**Level 1 bullets edited again same day**: removed the "— plus CLI-driven
+ad-hoc testing against a remote host" clause from the Blazor simulation
+website bullet (now ends at "...for release"), and added a new bullet,
+"Additionally, developed automation tools to streamline internal processes
+and contributed to improving game architecture" — near-verbatim from the old
+PDF, placed right after the mentoring bullet. Still 2 pages, ~99KB.
+
+**Project content corrections, same day — applied to the PDF AND the live
+website's `projects.js`/`site.js` (these weren't PDF-only wording tweaks,
+they were factual/naming corrections that should be consistent everywhere)**:
+- **Real Estate Website renamed**: `projects.js`'s title was "Bar Valley
+  Properties — Real Estate Website" — the user asked to drop the client name
+  entirely, so it's now just "Real Estate Website" (`context` stays "Client
+  project, Propagen"). Also updated the one `CONTENT.md` reference to match.
+  Don't reintroduce the "Bar Valley Properties" name without checking —
+  likely a client-confidentiality reason, not just CV brevity.
+- **Gomoku tournament claim removed**: `projects.js`'s summary said the agent
+  "plays live matches in a round-robin tournament against other students'
+  agents" — the user said the tournament didn't actually happen, so that
+  clause is gone from both the website summary and the PDF's one-liner (now
+  ends at "...to play live matches", no tournament claim). This was a factual
+  correction, not a brevity edit — don't add tournament language back.
+- **AWS course attributed to Udemy**: `achievements.professional` in
+  `site.js` now reads "Completed the AWS Solutions Architect Associate course
+  (Udemy)" instead of just "...course" — same change made in the PDF's
+  Accomplishments & Awards section.
+
+**PDF-only wording changes, same day** (these are just this rebuilt PDF's own
+condensed one-liners, not sourced from `projects.js`, so no website change
+needed):
+- Real Estate Website PDF summary: dropped "...and security headers at the
+  edge", now ends at "...serverless API layer and rate limiting".
+- InkLink PDF summary: the user asked what "Yjs" and "CRDT-based concurrent
+  editing" meant (jargon in their own project's write-up) — answered in chat
+  (Yjs is a CRDT library: a data structure that lets multiple people edit the
+  same document concurrently and always merges to the same result with no
+  central lock/server arbitrating conflicts) and, since even the candidate
+  found the phrasing opaque, reworded the PDF's summary in plain language:
+  "multiple people can edit the same note at once, with changes merged
+  automatically and no lost edits." `Yjs` stays in the stack tag next to the
+  title; only the summary sentence was simplified. The full CRDT/Yjs
+  explanation is still on the website (`projects.js`/`WorkApp.astro`
+  highlights) — this was a PDF-brevity call, not a "remove Yjs" one.
+
+Still 2 pages, ~99KB after all of the above.
+
+**Culture achievement category removed entirely, website + PDF, same day**:
+user asked to drop "CSV Team Leader" and the whole Culture category from
+Accomplishments & Awards. Since this was content curation (not PDF-only
+wording), removed it everywhere: `achievements.culture` deleted from
+`site.js`, the Culture `trophy-section` + its `icons.culture` SVG path
+deleted from `AchievementsApp.astro` (Sport now sits alone in the
+`trophy-side` card — the `.trophy-section-divider` that used to sit between
+Culture and Sport is now dead CSS with no divider left to style, so that rule
+was deleted too), and the Culture column dropped from the PDF's two-column
+Academic/Sport layout (Sport now fills the second column alone). Verified
+in-browser: the Achievements window now renders exactly 3 trophy-header
+titles (Professional, Academic, Sports), no orphaned divider, no console
+errors.
+
+**InkLink reworded to reflect actual (frontend-only) contribution, PDF-only**:
+user was on the frontend of InkLink (matches `projects.js`'s existing `role:
+"Frontend — one of three frontend devs on a 6-person team."`, which was
+already correct on the website), but the PDF's one-liner summary — added
+during the earlier Yjs/CRDT jargon-simplification pass — described the CRDT
+merge behavior in a way that read as a claim of having built that
+(backend-ish) conflict-resolution logic. Reworded to describe only the
+frontend work: "Frontend work on a collaborative note-taking app: a
+live-rendered markdown editor, note sharing/permissions UI, and real-time
+updates as collaborators edit together" — and trimmed the PDF's stack tag
+from the full team stack down to `React, TypeScript, WebSockets` (dropped
+Express/Sequelize/PostgreSQL/Yjs, which are backend/infra the user didn't
+personally build). The website's `projects.js` entry is untouched — its
+`role` field already disambiguated this correctly, so only the PDF (which has
+no per-project role line) needed the fix.
+
+**Dash style, PDF-only**: user asked for plain hyphens (`-`) instead of
+em-dashes (`—`) throughout the PDF. Every `—` in the scratch HTML source was
+replaced with `-` (title/date separators, project title-stack separators,
+mid-sentence breaks). En-dashes in date ranges were not part of this ask and
+there weren't any left to worry about either way — the PDF's date ranges
+already used plain hyphens. This is PDF-only; the website's own typography
+(em-dashes throughout `.astro` components) is unrelated and untouched.
+
+Still 2 pages, ~97KB.
+
+## Full website/PDF content sync audit (2026-08-26)
+
+User asked to double-check the website and `public/DiehanCV.pdf` contain the
+same info and are up to date with each other. Did a full line-by-line
+comparison of `site.js` + `projects.js` against the PDF's every section.
+Found and fixed two real content gaps (both in `site.js`'s `experience`
+array — the PDF had gained detail across several earlier edits this session
+that never made it back to the website):
+
+- **Graduate Software Developer description**: was "Focused on service
+  development while upskilling in AWS and C#. Continued to contribute to
+  interactive gameplay features across team projects." — missing ".NET" from
+  the upskilling list and missing the "developing backend services for
+  multiple games and creating an in-house AWS cloud solution with an internal
+  web platform for running game simulations" sentence entirely (present in
+  the PDF since the "include some of this sentence in the graduate experience
+  as well" request). Added both to `site.js`.
+- **Software Developer Level 1 description**: missing "Additionally,
+  developed automation tools to streamline internal processes and
+  contributed to improving game architecture" (present in the PDF since the
+  automation-tools-bullet request). Appended it to the end of the existing
+  paragraph in `site.js`.
+- **Propagen Website stack tag in the PDF**: was missing "Framer Motion",
+  which `projects.js`'s stack array has always included — an unexplained
+  drop from the very first PDF rebuild, not a deliberate edit. Added it back
+  to the PDF.
+
+Verified all three fixes live: read the Experience window's rendered
+paragraphs via JS after the `site.js` edit (both new sentences present,
+word-for-word), and re-read the regenerated PDF page 1 (Framer Motion visible
+in the Propagen stack tag). No console errors.
+
+**Differences confirmed intentional, left as-is** (don't "fix" these without
+checking first — they're deliberate, not gaps):
+- PDF Personal Information (Age/Gender/Nationality/Criminal Record) has no
+  website equivalent — `about.facts` shows Location/Role/Focus instead. User
+  explicitly asked to keep both this way.
+- PDF's Level 1 Blazor bullet omits the CLI-driven ad-hoc testing detail that
+  the website's fuller prose still has — user explicitly said "remove this
+  section" for the PDF; the website's richer narrative-style bio was never
+  asked to drop it, and there's no reason a concise resume bullet needs the
+  same depth as a "read more" web bio.
+- InkLink's PDF stack/summary is deliberately narrower than `projects.js`'s
+  (React/TypeScript/WebSockets only, no backend/CRDT claims) — reflects the
+  user's actual frontend-only role on that project, which `projects.js`
+  already stated correctly via its own `role` field; no website change was
+  needed there.
+- E-Spaza's PDF stack condenses "Apollo Client, Apollo Server, TypeGraphQL"
+  down to just "GraphQL" — this was the original PDF rebuild's editorial
+  choice from the start, not a later regression, and holds up fine as a
+  resume-level simplification.
+- Dash style (`-` vs `—`) differs between the two by design — PDF-only
+  request, website typography untouched.
+- The Runner-up honor appears in the PDF's Academic list but lives under
+  `academics.highlights` (the University Education card) on the website, not
+  `achievements.academic` — different subsection, same fact, present in both.
+- Full per-course marks tables (`academics.years`) are website-only, as
+  documented above — were never in any version of this PDF.
+
+## Website brought into alignment with the PDF, same day (2026-08-26)
+
+Follow-up to the sync audit above — user asked to actually apply several of
+the PDF-only changes back to the website too, plus a site-wide dash-style
+change:
+
+- **CLI-driven ad-hoc testing removed from `site.js`'s Level 1 description**
+  (was already gone from the PDF) — the sentence now ends at "...for release,
+  all while continuing to deepen expertise in C#, .NET, and scalable backend
+  development."
+- **InkLink (`projects.js`) now matches the PDF's frontend-only framing**:
+  `stack` trimmed from the full 9-item team stack down to `["React",
+  "TypeScript", "WebSockets"]`; `summary` replaced with the same plain-English
+  frontend description used in the PDF; `highlights` rewritten from 4
+  backend-flavored bullets (hybrid storage split, server-side CRDT
+  infrastructure, row-level sharing model, markdown editor) down to 3
+  frontend-appropriate ones (markdown editor integration kept, plus two new
+  ones about real-time UI updates and the sharing/permissions UI) — none of
+  them claim backend/CRDT implementation. `role` field was already correct
+  and untouched.
+- **E-Spaza (`projects.js`) stack condensed to match the PDF**: `["React
+  18", "TypeScript", "Apollo Client", "Apollo Server", "TypeGraphQL",
+  "TypeORM", "PostgreSQL", "Auth0"]` → `["React", "TypeScript", "GraphQL",
+  "TypeORM", "PostgreSQL", "Auth0"]`. `summary`/`highlights` were left as-is
+  (richer prose, not inaccurate, no PDF equivalent to diff against beyond the
+  one-liner).
+- **Framer Motion removed from Propagen's stack, both website and PDF** — the
+  user confirmed it isn't actually used in that project despite being listed;
+  this wasn't a sync gap, it was wrong information on both sides. Removed
+  from `projects.js`'s `propagen-website` entry and re-removed from the PDF
+  (had just been re-added by the sync-audit fix immediately prior — that fix
+  was itself wrong, corrected here).
+- **Em-dashes replaced with plain hyphens site-wide, in every rendered
+  string** (not in code comments — those keep em-dashes, they're not visible
+  on the site): `site.js` (already partly done fixing the CLI-testing
+  sentence), all of `projects.js` (67 lines — titles, summaries, highlights,
+  every image caption, done via a one-off Python script that skipped `//`
+  comment lines and replaced `—` → `-` on every other line), plus one
+  rendered-copy line each in `WorkApp.astro` ("open any card for...") and
+  `SkillsApp.astro` ("...workflows I work with -"). Verified via `grep` that
+  every remaining `—` in `src/` is inside a `/* */` or `//` comment, not
+  displayed text.
+
+Verified all of this live in-browser: Propagen/InkLink/E-Spaza detail-dialog
+stack tags read exactly as above, InkLink's summary/highlights match the PDF,
+no content-related console errors (the only console errors seen were Astro's
+dev-toolbar trying to reach its own local audit endpoint — a known dev-mode-
+only artifact unrelated to any of these edits). Re-read the regenerated PDF
+too: still 2 pages, ~97KB.
+
+## Mentoring wording: "junior" removed, "first service build" kept (2026-08-27)
+
+User asked to drop "junior developer" from the mentoring mentions (title/
+seniority not something to assert without checking) but explicitly does
+want the "through their first service build"/"through building their first
+game service" detail kept — an over-correction on the first pass replaced
+both with a fully generic "mentored another developer on the team", which
+lost real information the user wanted retained. Corrected to keep the detail
+and drop only "junior", everywhere it appears in `site.js` and the PDF:
+- `about.summary` / PDF Summary: "...I've mentored a developer through their
+  first service build, and I'm always looking for..."
+- `experience[2].description` (Level 1 role) / PDF Level 1 bullet:
+  "...Onboarded and mentored a developer through building their first game
+  service. Built a Blazor-based..."
+- `achievements.professional[1]` / PDF Accomplishments Professional bullet:
+  "Mentored a developer through building their first game service"
+
+The Criminal Record removal from the PDF's Personal Information block (see
+below) is unaffected by this correction and still stands.
+
+Verified: read the regenerated PDF (all three spots correct), and checked
+the live website's About/Experience/Achievements windows via JS — all three
+now contain "first service build" or "first game service" and none contain
+"junior". No console errors. Still 2 pages, ~96.6KB.
+
+## Criminal Record removed from PDF (2026-08-27)
+
+Removed the "Criminal Record: None" line from the PDF's Personal Information
+block per explicit request. That field has no website equivalent to begin
+with (`about.facts` shows Location/Role/Focus, not personal details like
+this — see the earlier "Personal Info" divergence note), so this is
+PDF-only. Personal Information now reads just Age/Gender/Nationality.
+
+## Website About summary made word-for-word identical to the PDF (2026-08-27)
+
+`site.js`'s `about.summary` had drifted from the PDF's Summary wording
+across earlier edits (different sentence order — "BSc..." as a trailing
+fragment instead of woven into the opening clause, and a different closing
+line: "next thing to build or learn" vs the PDF's "next problem worth
+solving"). User asked for the website to match the PDF exactly, so
+`about.summary` is now the identical string used in the PDF's Summary
+section: "Software Developer at Games Global with a BSc in Computer Science
+(Data Science) from Stellenbosch University, now putting that foundation to
+work owning service development end-to-end - building .NET/C# game
+backends, a Blazor-based simulation management and testing website, and an
+AI-powered translation tool on AWS Bedrock that cut the team's localisation
+costs. I've mentored a developer through their first service build, and I'm
+always looking for the next problem worth solving." No PDF change needed —
+the PDF was already the source of truth here. Verified via the live About
+window's rendered text; no console errors.
+
+## Contact app hint text corrected (2026-08-27)
+
+`ContactApp.astro`'s hint under the Email CTA said "For LinkedIn and GitHub,
+open the Contact Links icon in the dock" — stale copy from before
+`contact.github` was left empty. Since `contact.github` is still `""` (see
+the long-standing "Open items" note below — user hasn't supplied a GitHub
+URL), the dock's Contact Links flyout only ever shows LinkedIn and Email,
+never GitHub, so the hint was actively wrong. Changed to "For LinkedIn and
+Email, open the Contact Links icon in the dock." Verified live — the
+Contact window's hint paragraph now reads exactly that, no console errors.
+If `contact.github` ever gets filled in, this line should go back to
+mentioning GitHub too.
+
+## Bug fix: closed lightbox rendering as a black box at the bottom of the Work app (2026-08-27)
+
+User reported: maximizing the Portfolio window created a huge black box at
+the bottom with a × in its top-right corner. Root cause: `WorkApp.astro`'s
+`.lightbox` CSS rule (the fullscreen image-zoom `<dialog>` added a few
+sessions ago) set `display: flex` unconditionally on the bare `.lightbox`
+selector, not scoped to `.lightbox[open]`. A `<dialog>` with no `open`
+attribute is `display: none` by default via the browser's UA stylesheet —
+but **author CSS always wins over UA styles regardless of selector
+specificity**, so that unconditional `display: flex` overrode the default
+and rendered the closed dialog inline in the normal document flow at its
+declared 100vw×100vh size, with its near-black background
+(`rgba(8,9,11,0.97)`) and its `.lightbox-close` (×, positioned top:16px
+right:16px) button visible — exactly the "black box with an × in the top
+corner" reported. It became visually obvious specifically when the window
+was large enough (maximized) to make the extra block-level space at the
+bottom of `.work-app`'s content plainly visible.
+
+Fixed by removing `display: flex` from the base `.lightbox` rule entirely,
+leaving it only on `.lightbox[open]` (which already existed and was the
+correct rule — the bug was the redundant unscoped copy above it). Verified
+via computed styles: with the Portfolio window maximized and no project
+open, `.lightbox` now reports `display: none` and a 0×0 `getBoundingClientRect()`;
+opening a project and clicking the zoom button still correctly shows
+`display: flex` and `dialog.open === true`. No console errors. This is the
+kind of `<dialog>` gotcha worth remembering for any future dialog added to
+this codebase — never put `display` on the bare selector, only on
+`dialog[open]` or `dialog:modal`.
+
+## Website project content trims across 5 projects (2026-08-27)
+
+`projects.js` content edits, website only (no PDF changes requested/needed —
+these projects aren't in the PDF's terser project list beyond title/stack):
+
+- **Propagen Website**: removed the 2nd highlight ("Typed, layered error
+  handling..."), kept the 1st (server-side proxy) and what's now the 2nd
+  (scripted chat animation).
+- **Real Estate Website**: `context` changed from "Client project, Propagen"
+  to just "Client project" — dropped the Propagen name reference entirely,
+  consistently (title was already "Real Estate Website" from an earlier
+  session, not "Bar Valley Properties"). `summary` no longer says "for
+  Propagen, an n8n-based automation agency" or "re-skinned and re-pointed at
+  a new Airtable base for each future client" — now says "built as a
+  reusable client template, with per-client theming driven by environment
+  variables." `role` no longer ends with "...and the local-dev tooling."
+  Last highlight (the custom Vite plugin / local-dev-without-Vercel-CLI one)
+  removed, down to 3 highlights.
+- **InkLink**: `role` field ("Frontend - one of three frontend devs on a
+  6-person team.") removed entirely (user's explicit choice — asked, offered
+  a "replacement text" alternative, user chose flat removal). `WorkApp.astro`
+  already handles a missing `role` gracefully (conditional render +
+  `:empty { display: none }`), same as most other projects that never had
+  one — no component change needed.
+- **Gomoku**: removed "Connects to a game server over a socket and plays
+  live matches." from the summary — summary now ends at "...idle workers."
+- **DFA-Based Image Compression**: removed the "Self-similar images
+  compress to a handful of states..." sentence from the summary (now just
+  the first sentence), and removed the last highlight (the regression-style
+  test harness one), down to 3 highlights.
+
+Verified all 5 live via the Work app's project-detail dialog (summary/role/
+context/highlights read exactly as above for each), no console errors.
+
+## PII acronym spelled out (2026-08-27)
+
+Real Estate Website's "PII stripping at the API boundary..." highlight now
+reads "PII (personally identifiable information) stripping..." — spells the
+acronym out on first use so it doesn't assume the reader already knows it.
+Verified live via the project-detail dialog; no console errors.
+
+## Bug fix: solid cream block at the bottom of tall windows (2026-08-27)
+
+User reported: resizing a window past a certain height turned the bottom
+section into a single solid off-white/cream block. Root cause: `.window`
+is a flex column (titlebar + `.window-body`), but `.window-body` had no
+`flex: 1` — so it only ever grew to fit its own content's natural height,
+never to fill the window. Resize a window taller than its content needs and
+the leftover space below `.window-body` just showed `.window`'s own
+background (`rgba(246, 244, 240, 0.88)`, an off-white/cream glass tint)
+instead of `.window-body`'s lighter one (`rgba(255, 255, 255, 0.35)`) — a
+plain, texture-less block exactly matching what was reported. Confirmed by
+measuring: before the fix, resizing a Contact window (short content) to
+933px tall left `.window-body` at only ~243px, with a ~485px gap of bare
+`.window` background below it.
+
+Fixed by adding `flex: 1; min-height: 0;` to `.window-body` in
+`desktop.css`. The `min-height: 0` is required alongside `flex: 1` — without
+it a flex child's default `min-height: auto` lets its content's natural
+height override `overflow-y: auto` and force the flex item (and so the
+window) to grow to fit the content instead of scrolling internally.
+
+Verified: (1) `.window-body` now correctly grows to ~900px when a Contact
+window is resized to 933px tall — no more gap/solid block; (2) an
+Achievements window (which has genuinely tall content — the marks tables)
+still scrolls correctly inside a small window instead of forcing the window
+to grow (`scrollHeight` 3036px clipped to `clientHeight` 527px, `overflow-y:
+auto` confirmed); (3) on a mobile viewport, `.window-body` now also
+correctly fills the forced near-fullscreen mobile window height — which
+incidentally **resolves the previously-documented mobile-empty-space open
+item below** (see the "Open items" section — that note is now stale, kept
+only as history until this section gets trimmed). No console errors.
+
+## Mobile overflow fixes: Contact CTA + Portfolio cards (2026-08-27)
+
+User reported the Contact email button looked off-center on mobile ("padding
+on the left"), asked whether portfolio cards were centered on mobile too,
+and asked whether mobile always opens a window fully. Answered the last one
+directly first: yes — `sizeForMobile()` in `DesktopScript.astro` always sets
+every window to `calc(100vw - 88px)` × `calc(100vh - 84px)` on mobile,
+regardless of app or content, unconditionally.
+
+Investigating the first two found a real, shared root cause: mobile windows
+are much narrower (`calc(100vw - 88px)` ≈ 287px at a 375px viewport, ~240px
+after `.window-body` padding) than either component assumed:
+
+- **Contact CTA**: the button's own content ("Email <address>") doesn't fit
+  that width on one line and nothing constrained it, so it overflowed the
+  window's right edge and got clipped by `.window`'s `overflow: hidden` —
+  visible only from the left, reading as "left-padded" / off-center.
+- **Portfolio cards**: `.grid-2` (global.css) is `repeat(auto-fit,
+  minmax(280px, 1fr))` — a 280px floor wider than the ~240px actually
+  available, so cards overflowed and got clipped the same way, for the same
+  reason.
+
+**Portfolio fix**: added a `@media (max-width: 900px), (pointer: coarse)`
+override in `WorkApp.astro` collapsing `.project-grid` to
+`grid-template-columns: 1fr` — a single unconstrained column always exactly
+fits whatever width is actually available, no floor to overflow. (This
+media query matches the codebase's existing mobile breakpoint, already used
+elsewhere in `desktop.css`.)
+
+**Contact CTA fix** took two attempts — worth recording why the first one
+failed:
+1. First attempt: wrapped the email text in a new `.contact-cta-label` span
+   with `min-width: 0` (needed for a flex item's content to actually
+   shrink/wrap instead of defaulting to its unwrapped max-content size), and
+   tried centering `.contact-cta-wrap` on mobile via `display: table;
+   margin: auto`. This did NOT work — table auto-layout treats a table's
+   unwrapped content width as a hard floor and ignores `max-width` rather
+   than reflow/wrap cell content, so the button never actually shrank
+   (confirmed by measuring: identical 278px width before and after, despite
+   `max-width: 100%` computing correctly in devtools).
+2. Fix: switched `.contact-cta-wrap`'s mobile display to `display: flex;
+   justify-content: center` instead of `table` — flex containers have no
+   such floor. Also had to move `.contact-cta-glow` (the pulsing radial
+   highlight) from being a sibling of `.contact-cta` positioned relative to
+   `.contact-cta-wrap`, to being a child of `.contact-cta` positioned
+   relative to `.contact-cta` itself — otherwise, once the wrap became a
+   full-width flex row, the glow's `inset: -10px` would have covered the
+   entire row instead of hugging just the button.
+
+Verified thoroughly at 375px: button width now 239.8px (down from the
+overflowing 267–278px), wraps onto 2 lines (height 72px → 97px), zero
+overflow past the window's right edge, and precisely centered (17.85px gap
+on both sides, confirmed equal). Portfolio card: same 239.8px width, same
+symmetric 17.85px gaps, zero overflow. Re-verified at 1280px desktop width
+that neither change altered anything — `.contact-cta-wrap` still
+`inline-block`, button still single-line, left-aligned as before (the media
+query correctly doesn't fire). No console errors either way.
+
+## Mobile overflow audit across all other apps (2026-08-27)
+
+Follow-up to the Contact/Portfolio mobile-overflow fixes above — user asked
+to check every other app for the same issue. Swept all 7 windows
+(About/Skills/Portfolio/Experience/Achievements/Resume/Contact) at 375px by
+opening each and measuring every descendant element's `getBoundingClientRect()`
+against the window's right edge. Result: only Achievements' university marks
+`<table>` "overflows" its window — and that's correct, intentional behavior,
+not a bug: `.table-scroll` has `overflow-x: auto` and its own box stays
+fully within the window (`scrollOverflowsWindow: false`, confirmed
+separately), it's only the un-scrolled table *content* that's wider, which
+is exactly what a horizontally-scrollable table is supposed to do. No other
+app has a fixed-width/minmax-floor element like the two that were fixed
+(About's `.about-facts` grid has a 150px minmax floor, comfortably under the
+~240px available; Skills' tile grid is `flex-wrap`, not a rigid grid;
+Experience's `20px 1fr` grid column is trivially small). Nothing else to fix
+here.
+
+## Dead code cleanup (2026-08-27)
+
+User asked for a pass through the codebase removing unused code. Found and
+removed, all confirmed unused via `grep` across `src/` before deletion:
+
+- **`navItems`** export in `site.js` — a `#about`/`#skills`/etc. hash-anchor
+  nav list, leftover from an earlier single-page-scroll version of the site
+  from before the macOS-desktop-window redesign. Never imported anywhere
+  (navigation is entirely via the dock/menu bar now).
+- **`global.css`**: `.container`, `.section`, `.section-tight`,
+  `.btn-primary`, `.btn-outline`, and the `hr { ... }` rule — all leftover
+  from that same pre-redesign, full-page-scroll layout (`.container`'s
+  centered-max-width column, `.section`'s big vertical page-section padding,
+  outlined/primary button variants, a `<hr>` divider style) with zero
+  matching elements anywhere in the current template-driven, desktop-window
+  UI. `.card`, `.btn`, `.btn:hover`, `.chip`, `.grid`, `.grid-2`, `table`/
+  `th`/`td` (all still actively used — the AchievementsApp marks tables use
+  real `<table>` elements) were left untouched.
+- **CSS custom properties**: `--max-width` (only consumer was the now-removed
+  `.container`), `--primary-contrast` (only consumer was the now-removed
+  `.btn-primary`), and `--secondary` (never referenced via `var(--secondary)`
+  anywhere) — all deleted from `:root` in `global.css`.
+
+Checked and found genuinely clean (no action needed): every function
+declared in `DesktopScript.astro` and `WorkApp.astro`'s scripts has at least
+one real call-site (verified by counting `fnName(` occurrences per function,
+then double-checking the one false-negative by eye — `openLightbox` is
+passed by reference to `addEventListener`, not called with `()`, so the
+naive grep undercounted it; it's genuinely used). `package.json` has no
+stray dependencies (already cleaned earlier — see the sharp/pdf-lib one-off
+tool notes above). Every file under `public/Projects/` is referenced by
+`projects.js` (verified by diffing the two file lists); `Photos/pfp.jpg` and
+`Photos/wallpaper-hills.jpg` are both referenced (`AboutApp.astro`,
+`Wallpaper.astro`); `favicon.svg` is referenced (`Layout.astro`).
+
+**Deliberately NOT removed, despite being currently unused** — don't treat
+these as dead code without checking first:
+- `repo` field on every `projects.js` entry (unused since the "View
+  repository" button was removed from `WorkApp.astro` — see that earlier
+  note) — kept because it's real per-project data the user may want back on
+  the cards later, not code cruft.
+- `linkGlyphs.github` SVG in `Dock.astro` and `contact.github` in `site.js`
+  (currently `""`) — the Contact Links flyout already filters it out
+  automatically since it's falsy; the moment the user supplies a real GitHub
+  URL it activates with zero code changes needed. Removing the glyph now
+  would mean re-adding it later.
+
+Verified after all removals: dev server starts clean, every app window opens
+with no console errors, and `.card`/`.btn` (both still-used global classes)
+compute their styles correctly (`border-radius` still resolving from
+`var(--radius)`, `.card` background/border unaffected) — confirming the
+`--max-width`/`--primary-contrast`/`--secondary` variable removals didn't
+silently break anything still relying on them.
+
+## Dead code cleanup, round 2 — systematic scan (2026-08-27)
+
+Follow-up "please continue" — did a deeper, script-driven pass rather than
+more manual spot-checks:
+1. For every `.astro` component, extracted every class selector from its own
+   `<style>` block and confirmed each one appears elsewhere in that same
+   file (template or script). Zero unused — the codebase's scoped CSS is
+   already clean.
+2. Same check for `desktop.css` and `global.css` against the *entire*
+   `src/` tree (not just one file). `global.css` came back clean (post the
+   round-1 removals above). `desktop.css` turned up one real one:
+   **`.spotlight-result.highlighted`** — a keyboard-navigation highlight
+   style with zero JS ever toggling it (confirmed via grep for
+   `ArrowUp`/`ArrowDown`/`highlighted` across `DesktopScript.astro` — none
+   exist; Spotlight has no arrow-key result navigation implemented at all).
+   Removed just the `.highlighted` part of that compound selector, keeping
+   `.spotlight-result:hover` (which is real and used).
+3. Counted identifier occurrences for every `const` declared in the three
+   largest script blocks (`WorkApp.astro`, `DesktopScript.astro`,
+   `AchievementsApp.astro`) — zero declared-but-unused variables.
+4. Sanity-checked `astro.config.mjs` — minimal, nothing to trim.
+
+Verified: reopened Spotlight after the `.highlighted` removal — overlay
+still opens, all 7 results still list correctly, no console errors.
+
+## GitHub Contact Links plumbing + `repo` fields removed (2026-08-27)
+
+User revisited the "deliberately left alone" call from the dead-code cleanup
+above and said to remove it — they'll re-add if/when needed rather than
+leave it dormant. Removed:
+- `repo: "..."` from `projects.js`'s two entries that had it
+  (`propagen-website`, `propagen-client-website-template`) — and the now-
+  pointless plumbing that only existed to carry that field through:
+  `repo: p.repo ?? ""` in `WorkApp.astro`'s `clientProjects` mapping, and
+  `repo: string;` from its `Project` TypeScript type.
+- `linkGlyphs.github` (the GitHub SVG path data) and the `{ key: "github",
+  ... }` entry from `contactLinks` in `Dock.astro`.
+- `contact.github: ""` (plus its explanatory `// TODO` comment) from
+  `site.js`.
+
+Verified live: Contact Links flyout now lists exactly `["LinkedIn",
+"Email"]`; a project dialog still opens correctly (no crash from the
+removed field); no console errors.
+
+## Refactor pass: simplifying over-complex code (2026-08-27)
+
+Different framing from the dead-code passes above — not "is this reachable"
+but "is this more complicated than it needs to be." Found and fixed two real
+ones:
+
+1. **Window drag + resize-handle duplication in `DesktopScript.astro`**. The
+   titlebar-drag handler and each of the 8 per-window resize-handle handlers
+   independently reimplemented the same "track the pointer from mousedown to
+   mouseup" pattern — each with its own boolean flag (`dragging`/`resizing`)
+   and its own **permanently-attached** `window`-level `mousemove`/`mouseup`
+   listener pair that just early-returned when idle. At 8 handles × every
+   window that exists, that's dozens of always-on listeners across the whole
+   page doing a checked no-op on every mouse movement anywhere, just so a
+   drag *could* start. Extracted a shared `trackPointer(onMove, onUp)`
+   helper that attaches the mousemove/mouseup pair only for the duration of
+   one actual drag gesture (added on mousedown, removed on mouseup) — both
+   call sites shrink to just their drag-specific math, the boolean flags are
+   gone entirely (unnecessary once listeners only exist while a drag is
+   genuinely in progress), and idle listener count drops from "8 permanent
+   pairs per window" to zero.
+2. **Duplicated + actually-buggy carousel/lightbox nav in `WorkApp.astro`**.
+   `prevBtn`/`nextBtn` (carousel) and `lightboxPrev`/`lightboxNext`
+   (fullscreen zoom) each reimplemented the same index-wrapping arithmetic.
+   Worse: `lightboxPrev`/`lightboxNext` called `renderImage()` *and then*
+   explicitly called `renderLightbox()` again — but `renderImage()` already
+   calls `renderLightbox()` itself whenever the lightbox is open (`if
+   (lightbox?.open) renderLightbox()`), which it always is when those two
+   buttons are even clickable. That's a genuine double-render on every
+   lightbox nav click, not just a style nitpick. Consolidated all four
+   into one `stepIndex(delta)` helper; each button is now a one-line
+   `addEventListener("click", () => stepIndex(±1))`.
+
+Verified both thoroughly in-browser (not just "it still looks right"):
+- Drag: synthetic mousedown→mousemove→mouseup on a titlebar moved the window
+  by exactly the delta dragged; a stray `mousemove` with no preceding
+  `mousedown` now has zero effect (previously would have too, since
+  `dragging` would be false, but this confirms no listener leaked); dragging
+  a second window immediately after moved only that window, not the first.
+- Resize: a corner-handle drag grew the window by the expected delta.
+- Maximize interactions: maximizing then dragging the titlebar correctly
+  un-maximizes first (restores the pre-maximize size, 652.8×528 in the test)
+  and then follows the cursor; maximizing then dragging a resize handle also
+  correctly un-maximizes.
+- Carousel/lightbox sync: stepping next/prev from the carousel and from the
+  lightbox both update the *other* view's caption identically at every step,
+  confirming the shared `stepIndex()` didn't break the two-way sync (or
+  reintroduce the double-render — no visible difference expected there, but
+  the redundant call is simply gone from the code now).
+- No console errors in either case.
+
+## Achievements table horizontal scroll: verified working (2026-08-27)
+
+User asked to double-check the university marks table's horizontal scroll,
+suspecting they might just be misclicking it. Confirmed it genuinely works:
+- At the default desktop window size the table (420px min-width) fits
+  entirely within the card, so there's nothing to scroll — not a bug, just
+  no overflow to speak of at that size.
+- At mobile width the table (403px rendered) is genuinely wider than its
+  `.table-scroll` box (191.8px) — real overflow exists.
+- A synthetic `WheelEvent`/the automation tool's `scroll` action did NOT
+  move `scrollLeft` — but a synthetic drag gesture (`left_click_drag`) did,
+  moving `scrollLeft` from 0 to 220. Setting `scrollLeft` directly also
+  works. So the element is genuinely, natively scrollable; only synthetic
+  wheel-style scroll events don't translate to it in this sandboxed pane —
+  a real touch swipe (which is how an actual mobile visitor would scroll it)
+  works fine.
+
+**Real, separate finding while investigating**: there's no visual cue that
+the table is scrollable at all — no visible scrollbar, no edge fade/shadow,
+and the outer `.university-card` extends noticeably wider than the actual
+scrollable `.table-scroll` region (249.8px vs 199.8px in one measurement),
+so it looks like a plain, complete card with nothing further to reveal. This
+is likely the real reason it read as "not working" — not a functional bug,
+a missing affordance. Flagged to the user rather than changed unprompted;
+a small addition (visible scrollbar styling, or an edge-fade/"swipe" hint)
+would fix the discoverability without touching the actual scroll mechanism.
+
+## Bug fix: Contact Links flyout unreachable on mobile/touch (2026-08-27)
+
+User reported the Contact Links dock icon does nothing on mobile, whether
+hovering (impossible — no hover on touch) or tapping (confirmed doing
+nothing: `.dock-flyout` opacity stayed 0, no class change). Root cause:
+an earlier session change removed the trigger's click handler entirely,
+leaving `.hover-open` (mouse-only) and `:focus-within` (keyboard-only) as
+the only ways to open the flyout — both unreachable by touch, so the
+feature was completely inaccessible on mobile, not just less convenient.
+
+Fixed by re-adding a click handler, gated specifically to
+`window.matchMedia("(hover: none)").matches` — so it only exists on devices
+that have no other way to open the flyout; desktop mice keep the exact
+"click does nothing, hover-to-open" behavior from before. Also re-added
+(removed in that same earlier session, now needed again since touch can set
+`.open`): the `.dock-item-links.open` case in `desktop.css`'s "show flyout"
+selector (both the base rule and its mobile-media-query duplicate), an
+outside-tap-to-close `document` click listener (touch has no `mouseleave`
+to auto-close it the way desktop hover does), and `.open` cleanup in the
+Escape-key handler alongside the existing `.hover-open` cleanup.
+
+**Verification note — a real debugging detour worth recording**: initial
+`getComputedStyle(flyout).opacity` reads stayed `"0"` even after confirming
+via `element.matches()`, raw CSS source inspection, and specificity analysis
+that the `opacity: 1` rule was correct and should apply. This turned out to
+be the same sandboxed-pane limitation documented earlier in this file for
+IntersectionObserver/rAF — **animated/transitioning properties never
+resolve past their initial value here because this pane never composites
+frames**, while non-animated properties on the same element (`pointer-events`,
+which has no transition) update and read correctly immediately (confirmed:
+read `"auto"` right after opening). Verification therefore used
+`pointer-events` and class-list state instead of the (here-unreliable)
+`opacity` read: `.open` toggling on/off across click/second-click/outside-tap/
+Escape, and `pointer-events` flipping `none → auto`, all confirmed working
+via a full sequence test.
+
+**Also hit a stale-HMR console error mid-investigation** — same class of
+transient issue as the earlier HelpOverlay-deletion note: after several
+rapid edits, the *existing* tab logged `SyntaxError: Identifier 'trigger'
+has already been declared` (classic, non-module `<script>` tags share one
+top-level lexical scope across the whole document, so if Vite's dev-server
+HMR injects a replacement script without fully discarding the previous one,
+duplicate top-level `const`s across the two collide). Confirmed harmless:
+a **brand new tab** (not just a reload of the same tab) loaded with zero
+console errors and all behavior working correctly. Not a real code bug —
+don't chase this class of error without first trying a fresh tab, per the
+existing HelpOverlay note.
+
 ## Open items / things the user may still ask for
 - Chatbot (AI terminal like the reference theme has) — explicitly deferred by the
   user as a "maybe later" feature. Do not add Groq/Supabase/any backend for it
@@ -1094,10 +2047,15 @@ strip.
   is no longer original SVG art; it's now a real, freely-licensed Unsplash photo
   (see "Wallpaper: Bliss-style photo" above) — that's a deliberate exception the
   user asked for, not a lapse in the "no external assets" rule.
-- Mobile windows currently force near-fullscreen height (`sizeForMobile()`) even for
-  short-content apps like Contact, leaving visible empty space below the content.
-  Not fixed yet — would need either sizing-to-content on mobile or a deliberate
-  design call from the user on whether that empty space is fine.
+- ~~Mobile windows currently force near-fullscreen height (`sizeForMobile()`)
+  even for short-content apps like Contact, leaving visible empty space below
+  the content.~~ **Resolved as a side effect of the `.window-body { flex: 1 }`
+  fix above (2026-08-27)** — the window still forces near-fullscreen height on
+  mobile (unchanged, still `sizeForMobile()`), but `.window-body` now actually
+  fills that height with its own background/content area instead of leaving a
+  visible gap of `.window`'s bare background below short content. The
+  "near-fullscreen even for short content" sizing itself is still there by
+  design; only the visual gap it used to leave is gone.
 - `contact.github` is still an empty string in `site.js` — user still needs to
   supply their actual GitHub profile URL for the Contact Links dock flyout to
   show it. `contact.phone`/Call were removed outright (2026-08-18), not just

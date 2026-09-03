@@ -1,12 +1,3 @@
-export const navItems = [
-    { label: "About", href: "#about" },
-    { label: "Skills", href: "#skills" },
-    { label: "Work", href: "#work" },
-    { label: "Experience", href: "#experience" },
-    { label: "Achievements", href: "#achievements" },
-    { label: "Contact", href: "#contact" },
-];
-
 export const skills = [
     "Java",
     "C",
@@ -60,14 +51,14 @@ export const experience = [
         role: "Graduate Software Developer, Games Global",
         period: "January 2025 - May 2025",
         description:
-            "Focused on service development while upskilling in AWS and C#. Continued to contribute to interactive gameplay features across team projects.",
+            "Focused on service development while upskilling in AWS, C#, and .NET. Responsibilities included developing backend services for multiple games and creating an in-house AWS cloud solution with an internal web platform for running game simulations. Continued to contribute to interactive gameplay features across team projects.",
     },
     {
         role: "Software Developer Level 1, Games Global",
         period: "May 2025 - Present",
         description:
-            "Took on expanded responsibility across multiple games simultaneously, handling service-related bug fixes and contributing to game architecture improvements. Onboarded and mentored a new developer through building their first game service. Built a Blazor-based simulation management website, hosted on a remote machine, that lets the team request, run, and sign off game simulations for release — and supports ad-hoc testing by spawning games via CLI on the remote host, driving them through HTTP requests, and launching the client to validate changes both visually and functionally — all while continuing to deepen expertise in C#, .NET, and scalable backend development.",
-        extra: "In 2026, assumed sole ownership of all service development — responsible for creating, managing, and improving game services end-to-end. Expanded into client-side development, implementing features across games. Developed an AI-powered translation tool leveraging AWS to automate and significantly reduce the cost of the team's localisation workflow.",
+            "Took on expanded responsibility across multiple games simultaneously, handling service-related bug fixes and contributing to game architecture improvements. Onboarded and mentored a developer through building their first game service. Built a Blazor-based simulation management website, hosted on a remote machine, that lets the team request, run, and sign off game simulations for release, all while continuing to deepen expertise in C#, .NET, and scalable backend development. Additionally, developed automation tools to streamline internal processes and contributed to improving game architecture.",
+        extra: "In 2026, assumed sole ownership of all service development - responsible for creating, managing, and improving game services end-to-end. Expanded into client-side development, implementing features across games. Developed an AI-powered translation tool leveraging AWS to automate and significantly reduce the cost of the team's localisation workflow.",
     },
 ];
 
@@ -75,8 +66,8 @@ export const achievements = {
     professionalIntro: "Games Global, 2024 - Present.",
     professional: [
         "Progressed from Software Engineering Intern to Software Developer Level 1 in under a year, taking on sole ownership of all service development along the way",
-        "Mentored a new developer through building their first game service",
-        "Completed the AWS Solutions Architect Associate course",
+        "Mentored a developer through building their first game service",
+        "Completed the AWS Solutions Architect Associate course (Udemy)",
     ],
     academicIntro:
         "Robertson High School (2017-2021) | Grade 12 (Senior Certificate) - 94%",
@@ -90,9 +81,8 @@ export const achievements = {
         "Member of Golden Key International Society",
         "Grade 12 Average: 94.57%",
     ],
-    culture: ["CSV Team Leader"],
     sports: [
-        "Hockey: 0/19 A First Team, Hockey Umpire, Qualified for Tour team to New Zealand",
+        "Hockey: U/19 A First Team, Hockey Umpire, Qualified for Tour team to New Zealand",
         "Athletics: Captain of Team",
         "Swimming: School First Team, Captain of Team",
     ],
@@ -153,7 +143,7 @@ export const academics = {
 
 export const about = {
     summary:
-        "Software Developer at Games Global, where I own service development end-to-end — building .NET/C# game backends, a Blazor-based simulation management and testing website, and an AI-powered translation tool on AWS Bedrock that cut the team's localisation costs. BSc Computer Science (Data Science) from Stellenbosch. I've mentored a junior developer through their first service build, and I'm always looking for the next thing to build or learn.",
+        "Software Developer at Games Global with a BSc in Computer Science (Data Science) from Stellenbosch University, now putting that foundation to work owning service development end-to-end - building .NET/C# game backends, a Blazor-based simulation management and testing website, and an AI-powered translation tool on AWS Bedrock that cut the team's localisation costs. I've mentored a developer through their first service build, and I'm always looking for the next problem worth solving.",
     facts: [
         ["Location", "South Africa"],
         ["Role", "Software Developer, Games Global"],
@@ -164,9 +154,9 @@ export const about = {
 export const hero = {
     eyebrow: "Software Developer",
     headline:
-        "Building reliable backend services for live games — C# and .NET at the core, AWS alongside.",
+        "Building reliable backend services for live games - C# and .NET at the core, AWS alongside.",
     subhead:
-        "Software Developer at Games Global, focused on scalable service development, internal tooling, and AI-assisted workflows — with a data-informed mindset from a Computer Science background.",
+        "Software Developer at Games Global, focused on scalable service development, internal tooling, and AI-assisted workflows - with a data-informed mindset from a Computer Science background.",
     tags: ["South African", "Software Developer level 1", ".NET + C# Focus"],
 };
 
@@ -175,6 +165,4 @@ export const contact = {
     subtext: "Reach out for collaborations, roles, or project discussions.",
     email: "diehandrotschie@gmail.com",
     linkedin: "https://www.linkedin.com/in/diehan-drotschie-168a781b3/",
-    // TODO: fill in and the Contact Links dock flyout will pick it up automatically.
-    github: "",
 };

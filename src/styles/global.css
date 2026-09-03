@@ -5,10 +5,7 @@
     --text-secondary: #5c584f;
     --border: rgba(29, 27, 22, 0.1);
     --primary: #0f5b5b;
-    --primary-contrast: #ffffff;
-    --secondary: #c07c3c;
     --radius: 16px;
-    --max-width: 1080px;
     --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
         sans-serif;
     --font-display: "Outfit Variable", var(--font-body);
@@ -58,20 +55,6 @@ img {
 
 a {
     color: var(--primary);
-}
-
-.container {
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding: 0 1.5rem;
-}
-
-.section {
-    padding: 5rem 0;
-}
-
-.section-tight {
-    padding: 3rem 0;
 }
 
 .card {
@@ -137,17 +120,6 @@ p {
     opacity: 0.85;
 }
 
-.btn-primary {
-    background: var(--primary);
-    color: var(--primary-contrast);
-}
-
-.btn-outline {
-    background: transparent;
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
 .chip {
     display: inline-flex;
     padding: 0.35rem 0.85rem;
@@ -185,12 +157,6 @@ td {
 th {
     color: var(--text-secondary);
     font-weight: 600;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 1rem 0;
 }
 
 /* Shared scroll-reveal primitive: fade (optionally + rise) into place the

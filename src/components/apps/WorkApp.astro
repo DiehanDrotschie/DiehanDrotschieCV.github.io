@@ -12,7 +12,6 @@ const clientProjects = projects.map((p) => ({
     context: p.context ?? "",
     stack: p.stack ?? [],
     role: p.role ?? "",
-    repo: p.repo ?? "",
     summary: p.summary ?? "",
     highlights: p.highlights ?? [],
     images: (p.images ?? []).map((img) => ({
@@ -25,7 +24,7 @@ const clientProjects = projects.map((p) => ({
 <div class="app-content work-app">
     <h2>Portfolio</h2>
     <p class="text-secondary">
-        Projects I've built, from client work to personal builds — open any card for
+        Projects I've built, from client work to personal builds - open any card for
         screenshots and the technical write-up.
     </p>
     <div class="grid grid-2 project-grid">
@@ -70,6 +69,7 @@ const clientProjects = projects.map((p) => ({
                 <button type="button" class="gallery-nav gallery-prev" aria-label="Previous image">&#8249;</button>
                 <img class="gallery-image" src="" alt="" decoding="async" fetchpriority="high" />
                 <button type="button" class="gallery-nav gallery-next" aria-label="Next image">&#8250;</button>
+                <button type="button" class="gallery-zoom" aria-label="View full size">&#x26F6;</button>
             </div>
             <div class="gallery-thumbs"></div>
             <p class="gallery-caption"></p>
@@ -89,11 +89,40 @@ const clientProjects = projects.map((p) => ({
             </div>
         </div>
     </dialog>
+
+    <dialog class="lightbox">
+        <button type="button" class="lightbox-close" aria-label="Close full size view">&times;</button>
+        <button type="button" class="gallery-nav lightbox-prev" aria-label="Previous image">&#8249;</button>
+        <div class="lightbox-viewport">
+            <img class="lightbox-image" src="" alt="" decoding="async" />
+        </div>
+        <button type="button" class="gallery-nav lightbox-next" aria-label="Next image">&#8250;</button>
+        <p class="lightbox-caption"></p>
+        <div class="lightbox-zoom-controls">
+            <button type="button" class="lightbox-zoom-out" aria-label="Zoom out">&#8722;</button>
+            <span class="lightbox-zoom-level">100%</span>
+            <button type="button" class="lightbox-zoom-in" aria-label="Zoom in">&#43;</button>
+        </div>
+    </dialog>
 </div>
 
 <style>
     .project-grid {
         margin-top: 1.5rem;
+    }
+
+    /* .grid-2 (global.css) is `repeat(auto-fit, minmax(280px, 1fr))` — on
+       mobile the window itself (sizeForMobile() in DesktopScript.astro) is
+       much narrower than 280px of available content width, so that minmax
+       floor forced every card wider than the window and got clipped by
+       `.window`'s `overflow: hidden` — visible only from the left edge,
+       which read as "not centered" since you could never see a card's
+       right side. A single unconstrained column always exactly fits
+       whatever width is actually available. */
+    @media (max-width: 900px), (pointer: coarse) {
+        .project-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .project-card {
@@ -301,6 +330,191 @@ const clientProjects = projects.map((p) => ({
         cursor: default;
     }
 
+    .gallery-main img {
+        cursor: zoom-in;
+    }
+
+    .gallery-zoom {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: white;
+        font-size: 1.1rem;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        z-index: 2;
+    }
+
+    .gallery-zoom:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* Fullscreen "open image fully" view. Reuses the same images/index state
+       as the main carousel (see the script below) so prev/next and the
+       thumbnail strip stay in sync whichever view you close from. */
+    /* No `display` here on purpose — a <dialog> with no `open` attribute is
+       `display: none` by default (browser UA stylesheet), and author CSS
+       always wins over UA styles regardless of selector specificity. A
+       `display: flex` on the bare `.lightbox` selector overrode that default
+       and rendered the closed dialog inline in the page flow at 100vw×100vh
+       — a near-black box with its close button visible, at the bottom of
+       whatever content came before it. `display: flex` belongs only on
+       `.lightbox[open]`, below, so it only takes effect once `showModal()`
+       actually opens it. */
+    .lightbox {
+        border: none;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+        max-height: 100vh;
+        background: rgba(8, 9, 11, 0.97);
+        backdrop-filter: blur(12px);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lightbox[open] {
+        display: flex;
+    }
+
+    .lightbox::backdrop {
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    /* At zoom 1 the viewport just contains the image (object-fit: contain).
+       Zooming in switches the image to an explicit pixel width (set in the
+       script below, from its measured contain-fit size × zoom level) and
+       lets this container scroll so the zoomed-in image can be panned. */
+    .lightbox-viewport {
+        max-width: 92vw;
+        max-height: 78vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+
+    .lightbox-image {
+        max-width: 92vw;
+        max-height: 78vh;
+        object-fit: contain;
+    }
+
+    .lightbox-viewport.is-zoomed {
+        display: block;
+        cursor: grab;
+    }
+
+    .lightbox-viewport.is-zoomed.is-panning {
+        cursor: grabbing;
+    }
+
+    .lightbox-viewport.is-zoomed .lightbox-image {
+        max-width: none;
+        max-height: none;
+    }
+
+    .lightbox-caption {
+        position: absolute;
+        left: 0;
+        right: 3.5rem;
+        bottom: 1.25rem;
+        text-align: center;
+        color: #ddd;
+        font-size: 0.9rem;
+        margin: 0;
+        padding: 0 2rem;
+    }
+
+    .lightbox-zoom-controls {
+        position: absolute;
+        right: 20px;
+        bottom: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(10px);
+    }
+
+    .lightbox-zoom-in,
+    .lightbox-zoom-out {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+
+    .lightbox-zoom-in:hover:not(:disabled),
+    .lightbox-zoom-out:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .lightbox-zoom-in:disabled,
+    .lightbox-zoom-out:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+
+    .lightbox-zoom-level {
+        min-width: 3.2rem;
+        text-align: center;
+        color: #ddd;
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 50%;
+        color: white;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    .lightbox-prev {
+        left: 20px;
+    }
+
+    .lightbox-next {
+        right: 20px;
+    }
+
     .gallery-thumbs {
         display: flex;
         justify-content: center;
@@ -441,6 +655,18 @@ const clientProjects = projects.map((p) => ({
         const prevBtn = root.querySelector<HTMLButtonElement>(".gallery-prev");
         const nextBtn = root.querySelector<HTMLButtonElement>(".gallery-next");
         const closeBtn = root.querySelector<HTMLButtonElement>(".gallery-close");
+        const zoomBtn = root.querySelector<HTMLButtonElement>(".gallery-zoom");
+
+        const lightbox = root.querySelector<HTMLDialogElement>(".lightbox");
+        const lightboxViewport = root.querySelector<HTMLElement>(".lightbox-viewport");
+        const lightboxImage = root.querySelector<HTMLImageElement>(".lightbox-image");
+        const lightboxCaption = root.querySelector<HTMLElement>(".lightbox-caption");
+        const lightboxPrev = root.querySelector<HTMLButtonElement>(".lightbox-prev");
+        const lightboxNext = root.querySelector<HTMLButtonElement>(".lightbox-next");
+        const lightboxClose = root.querySelector<HTMLButtonElement>(".lightbox-close");
+        const zoomInBtn = root.querySelector<HTMLButtonElement>(".lightbox-zoom-in");
+        const zoomOutBtn = root.querySelector<HTMLButtonElement>(".lightbox-zoom-out");
+        const zoomLevelEl = root.querySelector<HTMLElement>(".lightbox-zoom-level");
 
         const detailTitle = root.querySelector<HTMLElement>(".project-detail-title");
         const detailContext = root.querySelector<HTMLElement>(".project-detail-context");
@@ -457,7 +683,6 @@ const clientProjects = projects.map((p) => ({
             context: string;
             stack: string[];
             role: string;
-            repo: string;
             summary: string;
             highlights: string[];
             images: ProjectImage[];
@@ -479,7 +704,117 @@ const clientProjects = projects.map((p) => ({
             });
             if (prevBtn) prevBtn.disabled = images.length <= 1;
             if (nextBtn) nextBtn.disabled = images.length <= 1;
+
+            if (lightbox?.open) renderLightbox();
         }
+
+        // Zoom is relative to the "fit to screen" size (100%), not native
+        // pixel size — baseSize is that fit-to-screen width/height in px,
+        // measured from the image's natural dimensions once it loads, and
+        // zoom multiplies it. Panning at zoom > 1 is just native scrolling:
+        // the viewport gets overflow:auto and the image gets an explicit
+        // pixel width larger than it, so drag-to-pan (below) is just
+        // adjusting scrollLeft/scrollTop.
+        const ZOOM_MIN = 1;
+        const ZOOM_MAX = 6;
+        const ZOOM_STEP = 0.25;
+        let zoom = ZOOM_MIN;
+        let baseWidth = 0;
+        let baseHeight = 0;
+
+        function updateZoomUI() {
+            if (zoomLevelEl) zoomLevelEl.textContent = `${Math.round(zoom * 100)}%`;
+            if (zoomOutBtn) zoomOutBtn.disabled = zoom <= ZOOM_MIN;
+            if (zoomInBtn) zoomInBtn.disabled = zoom >= ZOOM_MAX;
+        }
+
+        function applyZoom() {
+            if (!lightboxImage || !lightboxViewport) return;
+            if (zoom <= ZOOM_MIN || !baseWidth) {
+                lightboxImage.style.width = "";
+                lightboxImage.style.height = "";
+                lightboxViewport.classList.remove("is-zoomed");
+            } else {
+                lightboxImage.style.width = `${baseWidth * zoom}px`;
+                lightboxImage.style.height = `${baseHeight * zoom}px`;
+                lightboxViewport.classList.add("is-zoomed");
+            }
+            updateZoomUI();
+        }
+
+        function resetZoom() {
+            zoom = ZOOM_MIN;
+            applyZoom();
+            if (lightboxViewport) {
+                lightboxViewport.scrollLeft = 0;
+                lightboxViewport.scrollTop = 0;
+            }
+        }
+
+        function computeBaseSize() {
+            if (!lightboxImage?.naturalWidth) return;
+            const maxW = window.innerWidth * 0.92;
+            const maxH = window.innerHeight * 0.78;
+            const ratio = Math.min(maxW / lightboxImage.naturalWidth, maxH / lightboxImage.naturalHeight, 1);
+            baseWidth = lightboxImage.naturalWidth * ratio;
+            baseHeight = lightboxImage.naturalHeight * ratio;
+        }
+
+        function renderLightbox() {
+            if (!lightboxImage || !lightboxCaption) return;
+            const current = images[index];
+            baseWidth = 0;
+            baseHeight = 0;
+            resetZoom();
+            lightboxImage.src = current?.src ?? "";
+            lightboxImage.alt = current?.caption || "Project screenshot";
+            lightboxCaption.textContent = current?.caption ?? "";
+            if (lightboxPrev) lightboxPrev.disabled = images.length <= 1;
+            if (lightboxNext) lightboxNext.disabled = images.length <= 1;
+        }
+
+        lightboxImage?.addEventListener("load", () => {
+            computeBaseSize();
+            resetZoom();
+        });
+
+        zoomInBtn?.addEventListener("click", () => {
+            zoom = Math.min(ZOOM_MAX, +(zoom + ZOOM_STEP).toFixed(2));
+            applyZoom();
+        });
+
+        zoomOutBtn?.addEventListener("click", () => {
+            zoom = Math.max(ZOOM_MIN, +(zoom - ZOOM_STEP).toFixed(2));
+            applyZoom();
+        });
+
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+        let panScrollX = 0;
+        let panScrollY = 0;
+
+        lightboxViewport?.addEventListener("mousedown", (e) => {
+            if (!lightboxViewport.classList.contains("is-zoomed")) return;
+            isPanning = true;
+            lightboxViewport.classList.add("is-panning");
+            panStartX = e.clientX;
+            panStartY = e.clientY;
+            panScrollX = lightboxViewport.scrollLeft;
+            panScrollY = lightboxViewport.scrollTop;
+            e.preventDefault();
+        });
+
+        window.addEventListener("mousemove", (e) => {
+            if (!isPanning || !lightboxViewport) return;
+            lightboxViewport.scrollLeft = panScrollX - (e.clientX - panStartX);
+            lightboxViewport.scrollTop = panScrollY - (e.clientY - panStartY);
+        });
+
+        window.addEventListener("mouseup", () => {
+            isPanning = false;
+            lightboxViewport?.classList.remove("is-panning");
+        });
 
         function openProject(project: Project) {
             images = project.images;
@@ -548,15 +883,18 @@ const clientProjects = projects.map((p) => ({
             });
         });
 
-        prevBtn?.addEventListener("click", () => {
-            index = (index - 1 + images.length) % images.length;
+        // Shared by both the carousel's prev/next and the lightbox's — index
+        // cycling is identical either way, and `renderImage()` already
+        // re-renders the lightbox too when it's open (see its own
+        // `if (lightbox?.open) renderLightbox()`), so nothing else is
+        // needed here regardless of which pair of buttons was clicked.
+        function stepIndex(delta) {
+            index = (index + delta + images.length) % images.length;
             renderImage();
-        });
+        }
 
-        nextBtn?.addEventListener("click", () => {
-            index = (index + 1) % images.length;
-            renderImage();
-        });
+        prevBtn?.addEventListener("click", () => stepIndex(-1));
+        nextBtn?.addEventListener("click", () => stepIndex(1));
 
         closeBtn?.addEventListener("click", () => dialog?.close());
 
@@ -567,6 +905,29 @@ const clientProjects = projects.map((p) => ({
 
         dialog?.addEventListener("click", (e) => {
             if (e.target === dialog) dialog.close();
+        });
+
+        function openLightbox() {
+            if (!images.length) return;
+            renderLightbox();
+            lightbox?.showModal();
+        }
+
+        zoomBtn?.addEventListener("click", openLightbox);
+        galleryImage?.addEventListener("click", openLightbox);
+
+        lightboxPrev?.addEventListener("click", () => stepIndex(-1));
+        lightboxNext?.addEventListener("click", () => stepIndex(1));
+
+        lightboxClose?.addEventListener("click", () => lightbox?.close());
+
+        lightbox?.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") lightboxPrev?.click();
+            if (e.key === "ArrowRight") lightboxNext?.click();
+        });
+
+        lightbox?.addEventListener("click", (e) => {
+            if (e.target === lightbox) lightbox.close();
         });
     });
 </script>
