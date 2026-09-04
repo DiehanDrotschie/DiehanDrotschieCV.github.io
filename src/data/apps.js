@@ -91,7 +91,14 @@ export const apps = [
         icon: icon(
             '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 8h2"/><path d="M4 13h2"/><path d="M4 18h2"/><path d="M9 8h7"/><path d="M9 13h7"/><path d="M9 18h5"/>',
         ),
-        // Dock-only flyout, not a window — see Dock.astro. No width/height/openOnLoad needed.
+        // Desktop: dock-only hover flyout, not a window — see Dock.astro.
+        // Mobile: opens as a real window (ContactLinksApp.astro) instead,
+        // since touch has no hover to trigger the flyout with — see
+        // DesktopScript.astro's `.dock-item-links` handling. `links: true`
+        // still marks this as excluded from the menu bar / Spotlight, which
+        // stay desktop-flyout-only.
         links: true,
+        width: 420,
+        height: 340,
     },
 ];

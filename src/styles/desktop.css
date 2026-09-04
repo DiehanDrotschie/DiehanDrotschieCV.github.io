@@ -369,6 +369,21 @@
     flex: 1;
     min-height: 0;
     padding: 1.5rem;
+    /* `overflow-x: hidden` is explicit, not incidental — per the CSS spec,
+       declaring `overflow-y: auto` alone (with overflow-x left at its
+       default `visible`) forces overflow-x to compute to `auto` too, making
+       `.window-body` an unintended *second* horizontal scroll container
+       nested around anything that manages its own (e.g. Achievements'
+       `.table-scroll`). Confirmed live: `.window-body` was reporting
+       `overflow-x: auto` despite having nothing that actually needs to
+       scroll sideways at this level (the mobile-overflow audit already
+       established every app's horizontal overflow is handled by its own
+       inner scroll container). Nested auto-scroll regions are a known
+       source of touch swipes landing on the wrong (outer) scroller instead
+       of the intended inner one — this removes the ambiguity so a
+       horizontal swipe that starts on `.table-scroll` can only ever be
+       claimed by `.table-scroll` itself. */
+    overflow-x: hidden;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.35);
     scrollbar-width: thin;
@@ -570,15 +585,16 @@
    mid-crossing and stranding the flyout unclickable. `.hover-open` is a JS-
    managed class (DesktopScript.astro) with a short close-delay that survives
    the crossing instead. `:focus-within` (keyboard) has no such gap problem
-   and stays as a direct trigger. `.open` is also JS-managed (same file) —
-   click-to-toggle was deliberately removed as redundant on desktop (hover
-   already opens it there), but touch devices have no hover at all, so the
-   trigger button re-gains a click handler specifically when `(hover: none)`
-   matches — that's what sets `.open`. Don't remove `.open` again without
-   checking; doing so breaks the flyout entirely on touch, not just makes it
-   slightly less convenient. */
+   and stays as a direct trigger. Desktop-only: on touch devices the trigger
+   opens `contact-links` as a real window instead (see DesktopScript.astro
+   and ContactLinksApp.astro) rather than trying to make this flyout itself
+   work on tap — `.dock`'s mobile `overflow-y: auto` forces its overflow-x to
+   `auto` too (unset properties follow the CSS spec's paired-axis rule), which
+   clips this flyout to nothing since it pops out sideways, outside `.dock`'s
+   own box. A `.dock-item-links.open`/portalled-flyout variant of this rule
+   existed briefly to work around that clip but was dropped in favor of the
+   simpler window-based approach. */
 .dock-item-links.hover-open .dock-flyout,
-.dock-item-links.open .dock-flyout,
 .dock-item-links:focus-within .dock-flyout {
     opacity: 1;
     pointer-events: auto;
@@ -795,7 +811,6 @@
     }
 
     .dock-item-links.hover-open .dock-flyout,
-    .dock-item-links.open .dock-flyout,
     .dock-item-links:focus-within .dock-flyout {
         transform: translateY(-50%) translateX(0);
     }

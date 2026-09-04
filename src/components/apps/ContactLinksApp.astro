@@ -1,0 +1,163 @@
+---
+import { contact } from "../../data/site.js";
+
+// Same glyphs/link list as Dock.astro's desktop flyout — small enough
+// (2 entries) that duplicating it here isn't worth a shared module, matching
+// this codebase's existing convention for similarly small per-file bits.
+const linkGlyphs = {
+    linkedin:
+        '<rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/><path d="M10 21v-8"/><path d="M10 13a4 4 0 0 1 8 0v8"/>',
+    email: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>',
+};
+
+const contactLinks = [
+    { key: "linkedin", label: "LinkedIn", detail: "Connect on LinkedIn", href: contact.linkedin, external: true },
+    {
+        key: "email",
+        label: "Email",
+        detail: contact.email,
+        href: contact.email ? `mailto:${contact.email}` : "",
+    },
+].filter((link) => link.href);
+---
+
+<div class="app-content contact-links-app">
+    <div class="contact-links-hero reveal-rise">
+        <span
+            class="contact-links-glyph"
+            set:html='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 8h2"/><path d="M4 13h2"/><path d="M4 18h2"/><path d="M9 8h7"/><path d="M9 13h7"/><path d="M9 18h5"/></svg>'
+        />
+        <div>
+            <h2>Contact Links</h2>
+            <p class="text-secondary">Reach out directly.</p>
+        </div>
+    </div>
+
+    <div class="contact-links-list">
+        {
+            contactLinks.map((link, i) => (
+                <a
+                    class="contact-links-item reveal-rise"
+                    style={`--reveal-delay:${100 + i * 80}ms`}
+                    href={link.href}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noreferrer" : undefined}
+                >
+                    <span
+                        class="contact-links-item-icon"
+                        set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${linkGlyphs[link.key]}</svg>`}
+                    />
+                    <span class="contact-links-item-text">
+                        <span class="contact-links-item-label">{link.label}</span>
+                        <span class="contact-links-item-detail">{link.detail}</span>
+                    </span>
+                    <span class="contact-links-item-arrow" aria-hidden="true">
+                        &rarr;
+                    </span>
+                </a>
+            ))
+        }
+    </div>
+</div>
+
+<style>
+    .contact-links-hero {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .contact-links-hero h2 {
+        margin: 0 0 0.25rem;
+    }
+
+    .contact-links-glyph {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 46px;
+        height: 46px;
+        flex-shrink: 0;
+        border-radius: 13px;
+        background: linear-gradient(160deg, #c9a6ff 0%, #7b4fe0 100%);
+        color: white;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .contact-links-glyph svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .contact-links-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .contact-links-item {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.9rem 1rem;
+        border-radius: var(--radius);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        text-decoration: none;
+        color: var(--text);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .contact-links-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(123, 79, 224, 0.16);
+        border-color: rgba(123, 79, 224, 0.3);
+    }
+
+    .contact-links-item-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        border-radius: 11px;
+        background: linear-gradient(160deg, #c9a6ff 0%, #7b4fe0 100%);
+        color: white;
+    }
+
+    .contact-links-item-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .contact-links-item-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        min-width: 0;
+    }
+
+    .contact-links-item-label {
+        font-weight: 600;
+    }
+
+    .contact-links-item-detail {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        overflow-wrap: break-word;
+    }
+
+    .contact-links-item-arrow {
+        margin-left: auto;
+        flex-shrink: 0;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .contact-links-item:hover .contact-links-item-arrow {
+        transform: translateX(3px);
+    }
+</style>

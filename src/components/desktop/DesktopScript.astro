@@ -333,29 +333,66 @@ const appMeta = apps
         });
     });
 
-    // Contact Links dock flyout. Hover-only on desktop by design (see
-    // desktop.css's `.hover-open` comment) — click-to-toggle was removed
-    // there as redundant next to hover. But touch devices have no hover at
-    // all, so a hover-only trigger left the flyout completely unreachable
-    // on mobile (confirmed: tapping did nothing, not even a flash). Click
-    // is re-added here, gated to `(hover: none)` so it only ever fires on
-    // devices that have no other way to open the flyout — desktop mice
-    // still get click-does-nothing, hover-to-open exactly as before.
-    const noHover = window.matchMedia("(hover: none)").matches;
-
+    // Contact Links dock icon. Hover-only flyout on desktop by design (see
+    // desktop.css's `.hover-open` comment). Touch devices have no hover at
+    // all, and previous attempts to make the flyout itself work on tap ran
+    // into a structural problem: `.dock` gets `overflow-y: auto` on mobile
+    // (so a long icon list can scroll on a short viewport), and per the CSS
+    // spec that forces `overflow-x` to `auto` too even though it was never
+    // declared — silently clipping the flyout, which pops out *sideways*
+    // from the dock, off past `.dock`'s own box. Rather than keep fighting
+    // that (portalling the flyout to <body> worked but felt fragile, per
+    // the user), touch/mobile now gets a completely different, simpler
+    // path: tapping the icon opens `contact-links` as a normal window (see
+    // `ContactLinksApp.astro`), exactly like every other dock icon. Desktop
+    // keeps the original hover flyout, untouched.
+    //
+    // Mobile vs. desktop here is decided by `isMobile()` — the same
+    // `(max-width: 900px), (pointer: coarse)` check the rest of the window
+    // system already uses everywhere else (sizing, single-window-at-a-time,
+    // resize handles) — evaluated live inside the click handler below, not
+    // cached once at load. An earlier version of this used a separate
+    // `window.matchMedia("(hover: none)")` check instead, computed once at
+    // script load: that read `true` on real desktop hardware in practice
+    // (some desktop/hybrid setups report `hover: none` even with a mouse as
+    // the primary input), silently routing an actual desktop visitor into
+    // the mobile branch — hover doing nothing, and a click opening the
+    // window — while every other part of the site still correctly treated
+    // them as desktop. Using `isMobile()` here instead means this icon
+    // always agrees with how the visitor is treated everywhere else on the
+    // site, and re-checking it live (rather than a load-time constant) also
+    // means it stays correct if someone resizes their browser across the
+    // breakpoint, matching how `isMobile()` is used elsewhere in this file.
     document.querySelectorAll(".dock-item-links").forEach((item) => {
         const trigger = item.querySelector(".dock-trigger");
 
-        if (noHover) {
-            trigger?.addEventListener("click", (e) => {
-                e.stopPropagation();
-                const isOpen = item.classList.contains("open");
-                document
-                    .querySelectorAll(".dock-item-links.open")
-                    .forEach((el) => el.classList.remove("open"));
-                item.classList.toggle("open", !isOpen);
-            });
-        }
+        // Lets `setDockActive()` (already called by every openWindow/
+        // closeWindow, keyed off `[data-open="${id}"].dock-item`) find and
+        // highlight this icon too, so it gets the same "active" dot every
+        // other dock icon shows while its window is open. Set here, once,
+        // for both desktop and mobile — safe to do unconditionally because
+        // it runs *after* the generic `[data-open]` handler above already
+        // took its `querySelectorAll` snapshot, so that handler never sees
+        // this element and never attaches its own click listener to it (if
+        // it did, a click would fire both that handler's `toggleWindow` and
+        // this block's own `openWindow` call below, immediately closing the
+        // window this block had just opened). On desktop, `openWindow`/
+        // `closeWindow` are simply never called for "contact-links" at all
+        // (the click handler below no-ops there), so this attribute being
+        // present is inert — nothing to highlight, matching "mobile only".
+        item.setAttribute("data-open", "contact-links");
+
+        trigger?.addEventListener("click", (e) => {
+            if (!isMobile()) return;
+            e.stopPropagation();
+            // toggleWindow, not openWindow — this icon already has
+            // `.dock-item` + `data-open` just like every other dock icon
+            // (see the attribute set above), and every other dock icon
+            // closes its window on a second tap via `toggleWindow`. Calling
+            // `openWindow` unconditionally here meant a second tap just
+            // re-opened the already-open window instead of closing it.
+            toggleWindow("contact-links");
+        });
 
         // Hover, with a debounced close instead of raw CSS :hover. The
         // flyout sits 14px above the dock icon with nothing rendered in
@@ -389,17 +426,6 @@ const appMeta = apps
                 // `:focus-within` half of that CSS rule.
                 if (item.contains(document.activeElement)) trigger?.blur();
             }, 250);
-        });
-    });
-
-    // Touch has no mouseleave to auto-close the flyout once `.open`, so a
-    // tap anywhere outside it needs to close it explicitly — otherwise it
-    // stays open on-screen until the visitor happens to tap the trigger
-    // again. Desktop's hover-close (above) already handles its own case and
-    // never sets `.open`, so this is a no-op there.
-    document.addEventListener("click", (e) => {
-        document.querySelectorAll(".dock-item-links.open").forEach((item) => {
-            if (!item.contains(e.target)) item.classList.remove("open");
         });
     });
 
@@ -631,8 +657,8 @@ const appMeta = apps
         if (e.key === "Escape") {
             closeSpotlight();
             document
-                .querySelectorAll(".dock-item-links.hover-open, .dock-item-links.open")
-                .forEach((el) => el.classList.remove("hover-open", "open"));
+                .querySelectorAll(".dock-item-links.hover-open")
+                .forEach((el) => el.classList.remove("hover-open"));
         }
     });
 

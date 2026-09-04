@@ -69,7 +69,7 @@ const markTier = (mark) => {
         )}
         {
             academics.years.map((year) => (
-                <div>
+                <div class="table-wrap">
                     <h4>{year.title}</h4>
                     <div class="table-scroll">
                         <table>
@@ -95,6 +95,7 @@ const markTier = (mark) => {
                             </tbody>
                         </table>
                     </div>
+                    <div class="table-scroll-fade" aria-hidden="true"></div>
                 </div>
             ))
         }
@@ -127,8 +128,40 @@ const markTier = (mark) => {
         margin-top: 1.5rem;
     }
 
+    /* `.table-wrap` doesn't scroll itself — it's just the positioning
+       context for `.table-scroll-fade` below, which needs to stay pinned to
+       the card's right edge regardless of how far `.table-scroll` (its
+       sibling) has been scrolled horizontally. */
+    .table-wrap {
+        position: relative;
+    }
+
     .table-scroll {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Visible hint that the table scrolls sideways — there's otherwise no
+       cue at all (no border marking the scroll region's edge, and touch
+       browsers don't show a scrollbar until a scroll gesture is already in
+       progress). Toggled by the script below based on real measured
+       overflow + scroll position, not shown unconditionally: hidden when a
+       table already fits without scrolling, and fades out once scrolled to
+       the end since there's nothing further to reveal. */
+    .table-scroll-fade {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 28px;
+        pointer-events: none;
+        background: linear-gradient(to left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .table-scroll-fade.is-visible {
+        opacity: 1;
     }
 
     /* Fixed layout + shared column widths so "Mark" lands at the same x
@@ -349,4 +382,46 @@ const markTier = (mark) => {
     );
 
     document.querySelectorAll<HTMLElement>("[data-count-to]").forEach((el) => observer.observe(el));
+
+    // Marks-table scroll-fade affordance (see the `.table-scroll-fade`
+    // comment in the <style> block for why this exists).
+    function updateTableFade(scrollEl: HTMLElement, fadeEl: HTMLElement) {
+        const canScroll = scrollEl.scrollWidth > scrollEl.clientWidth + 1;
+        const atEnd = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 1;
+        fadeEl.classList.toggle("is-visible", canScroll && !atEnd);
+    }
+
+    const achievementsWindow = document.querySelector(".window[data-app='achievements']");
+
+    document.querySelectorAll<HTMLElement>(".table-scroll").forEach((scrollEl) => {
+        const fadeEl = scrollEl.parentElement?.querySelector<HTMLElement>(".table-scroll-fade");
+        if (!fadeEl) return;
+        const recompute = () => updateTableFade(scrollEl, fadeEl);
+        scrollEl.addEventListener("scroll", recompute, { passive: true });
+        // ResizeObserver re-measures whenever `.table-scroll`'s own size
+        // changes (window open, maximize, manual resize) — needed because
+        // this app's `.window` starts `display: none` (closed) on load, so
+        // a single measurement at script-eval time would always see "0×0,
+        // nothing to scroll" and never revisit it.
+        new ResizeObserver(recompute).observe(scrollEl);
+    });
+
+    // Belt-and-suspenders alongside ResizeObserver above, not a duplicate:
+    // ResizeObserver's callback is queued as part of the browser's
+    // rendering pipeline, same category as the rAF/IntersectionObserver
+    // callbacks noted as unreliable elsewhere in this codebase inside a
+    // sandboxed tool pane that never composites a frame (confirmed directly
+    // while building this — ResizeObserver never fired there even after
+    // `.table-scroll` genuinely went from 0×0 to a real, overflowing size).
+    // MutationObserver has no such dependency — it's DOM-mutation-driven,
+    // not render-pipeline-driven — so it's what actually made this testable
+    // here, and is a legitimate extra safety net for real visitors too.
+    if (achievementsWindow) {
+        new MutationObserver(() => {
+            document.querySelectorAll<HTMLElement>(".table-scroll").forEach((scrollEl) => {
+                const fadeEl = scrollEl.parentElement?.querySelector<HTMLElement>(".table-scroll-fade");
+                if (fadeEl) updateTableFade(scrollEl, fadeEl);
+            });
+        }).observe(achievementsWindow, { attributes: true, attributeFilter: ["style", "class"] });
+    }
 </script>

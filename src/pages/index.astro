@@ -15,6 +15,7 @@ import ExperienceApp from "../components/apps/ExperienceApp.astro";
 import AchievementsApp from "../components/apps/AchievementsApp.astro";
 import ResumeApp from "../components/apps/ResumeApp.astro";
 import ContactApp from "../components/apps/ContactApp.astro";
+import ContactLinksApp from "../components/apps/ContactLinksApp.astro";
 
 const appComponents = {
     about: AboutApp,
@@ -24,6 +25,7 @@ const appComponents = {
     achievements: AchievementsApp,
     resume: ResumeApp,
     contact: ContactApp,
+    "contact-links": ContactLinksApp,
 };
 ---
 
@@ -33,7 +35,6 @@ const appComponents = {
         <MenuBar />
         {
             apps
-                .filter((app) => !app.links)
                 .map((app) => {
                     const Content = appComponents[app.id];
                     return (

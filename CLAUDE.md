@@ -2037,6 +2037,264 @@ console errors and all behavior working correctly. Not a real code bug —
 don't chase this class of error without first trying a fresh tab, per the
 existing HelpOverlay note.
 
+## Bug fix, round 2: Contact Links flyout still broken on mobile + Achievements table still not scrollable (2026-09-04)
+
+User reported both the "fixed" Contact Links mobile issue and the Achievements
+horizontal scroll were still broken after the earlier round-1 fixes above. Both
+turned out to be real, previously-undiscovered bugs — the round-1 verification
+had confirmed the *class-toggling* logic worked, but hadn't caught that the
+*visual result* was still broken for a different reason in each case.
+
+**Contact Links flyout — actually clipped to invisible, not just unreachable.**
+Root cause: `.dock` gets `overflow-y: auto` in the mobile media query (so a
+long icon list can scroll on a short viewport). Per the CSS spec, declaring
+`overflow-y` as anything but `visible` while `overflow-x` is left undeclared
+forces `overflow-x` to compute to `auto` too — confirmed live
+(`getComputedStyle(dock).overflowX === "auto"`) even though nothing was ever
+written to set it. `.dock-flyout` pops out *sideways* on mobile (`right:
+calc(100% + 14px)`, to the left of the vertical dock rail) — entirely outside
+`.dock`'s own box — so it was being silently clipped to a 0-visible-area
+rect by that forced overflow-x, regardless of whether `.open`/pointer-events
+were correctly toggled (which is all the round-1 fix actually verified).
+Measured directly: the flyout's rect (`left:142, right:302`) never overlapped
+`.dock`'s rect (`left:301, right:365`) at all — total clip, not partial.
+`.dock` also has `transform: translateY(-50%)` on mobile, which makes it the
+containing block for any `position:fixed` descendant too — so simply
+switching the flyout to `position: fixed` *without* moving it in the DOM
+wouldn't have escaped the clip either, it'd still be constrained by `.dock`'s
+box as if absolutely positioned.
+
+Fixed in `DesktopScript.astro`: on `noHover` devices only, the flyout node is
+reparented to `<body>` once at setup (`document.body.appendChild(flyout)`),
+tagged with a new `.dock-flyout-portal` class, and positioned via inline
+`style.top`/`style.right` computed from the trigger's own
+`getBoundingClientRect()` at each open (`positionMobileFlyout()`). Since a
+portalled flyout is no longer a DOM descendant of `.dock-item-links`, the
+existing descendant-selector show/hide CSS rules can't reach it — a new
+`.dock-flyout.dock-flyout-portal.open` rule in `desktop.css` (keyed off a
+class toggled on the flyout itself, alongside `.dock-item-links`'s own
+`.open`) replaces them for the portalled copy. The outside-click-to-close
+listener and the Escape handler both needed a matching update: they used to
+check `item.contains(e.target)` to detect a tap inside the flyout, which
+silently broke once the flyout was no longer `item`'s descendant — now they
+also check `document.querySelector(".dock-flyout-portal.open")?.contains(...)`
+directly. Desktop is completely unaffected — `noHover` is false there, so the
+flyout is never reparented, and `.dock` has no `overflow`/`transform` set
+outside the mobile media query, so it was never clipping anything there in
+the first place.
+
+Verified via direct JS state/rect checks (the usual pattern here, given this
+tool's own Browser pane can't reliably simulate real touch and has its own
+`computer`-tool click/drag flakiness independent of this bug): flyout
+correctly reparents to `<body>`, its rect no longer overlaps `.dock`'s clip
+region, `document.elementFromPoint()` at the flyout's own center hits the
+flyout itself (not something else, not nothing), open/close/toggle/outside-
+click/Escape all correctly flip `.open` on both `.dock-item-links` and the
+flyout, and a synthetic click on the Email link inside the open flyout does
+NOT get force-closed by the outside-click listener before it can fire
+(verified the listener's early-return branch is actually hit). Re-verified
+desktop is untouched: `noHover` reads `false`, flyout stays a plain
+descendant of `.dock-item-links` (never portalled), hover still works via
+`.hover-open` exactly as before.
+
+**Achievements table — a second, unintended horizontal scroll container was
+absorbing the swipe.** `.window-body` has the exact same "overflow-y:auto
+forces overflow-x:auto" issue as `.dock` above — confirmed live
+(`getComputedStyle(windowBody).overflowX === "auto"`) despite nothing in this
+codebase ever needing `.window-body` itself to scroll sideways (the earlier
+per-app mobile-overflow audit already established every app's horizontal
+overflow is handled by its own inner scroll container, e.g. Achievements'
+`.table-scroll`). That leaves two *nested* horizontal-auto-scroll containers
+around the marks table — a known source of a touch swipe getting captured by
+the wrong (outer) one, especially if the swipe doesn't start precisely inside
+`.table-scroll`'s own box (which has no visible border marking its edge, so a
+visitor has no way to know exactly where it starts). Fixed by making
+`.window-body`'s `overflow-x: hidden` explicit in `desktop.css`, removing the
+ambiguity — a horizontal swipe can now only ever be claimed by
+`.table-scroll` itself.
+
+Also finally implemented the visible-scroll-affordance fix that round-1 had
+flagged but left undone (no visible cue the table was scrollable at all,
+likely the bigger practical factor even before the overflow-x bug above —
+easy to swipe the wrong spot, or not realize there's anything to swipe for,
+when there's no edge fade/border hinting more content exists off-screen).
+Added `.table-scroll-fade` in `AchievementsApp.astro`: a `position: absolute`
+right-edge white gradient, sibling of `.table-scroll` inside a new
+non-scrolling `.table-wrap` wrapper (so it stays pinned to the card's right
+edge regardless of the sibling's own scroll offset — putting it *inside* the
+scrolling element instead would have required `position: sticky` fighting the
+table's own layout, much more fragile). Visibility is toggled by
+`updateTableFade()` based on real measured overflow (`scrollWidth >
+clientWidth`) and current scroll position (fades out once scrolled to the
+end, since there's nothing further to reveal).
+
+**Gotcha hit while building the fade, worth recording**: the Achievements
+`.window` starts `display: none` (closed) on page load, so `.table-scroll` is
+0×0 until the window is actually opened — a plain one-off measurement at
+script-eval time always saw "nothing to scroll" and never revisited it.
+First fix attempt used `ResizeObserver` (fires when an observed element's
+size changes, which should include display:none→flex) — this is very likely
+correct for real visitors' actual browsers, but **did not fire at all in this
+sandboxed Browser pane** even after confirming `.table-scroll` had genuinely
+gone from 0×0 to a real, overflowing size. Root cause: `ResizeObserver`'s
+callback is queued as part of the browser's rendering pipeline, same
+category as the `rAF`/`IntersectionObserver`/CSS-transition callbacks already
+documented elsewhere in this file as unreliable in this specific tool's pane,
+because it never composites a frame. Added a second, independent trigger
+alongside it — a `MutationObserver` watching the Achievements `.window`
+element's `style`/`class` attributes (DOM-mutation-driven, not
+render-pipeline-driven, so unaffected by that limitation) — which is what
+actually made this verifiable here, and is a legitimate extra safety net for
+real visitors too (belt-and-suspenders, not a redundant duplicate — keep
+both if this is touched again, don't remove either one thinking the other
+alone covers it).
+
+Verified end-to-end: window starts closed → opens → fade correctly becomes
+visible (confirms the overflow was actually detected, not just assumed) →
+setting `scrollLeft` to the end and dispatching `scroll` correctly hides the
+fade again. Also verified on a normal desktop-width window: the marks table
+already doesn't fit at the Achievements app's *default* desktop window size
+either (183px available vs. the table's 420px min-width) — the fade
+correctly shows there too. That's not a regression, it's the same
+previously-undiscoverable-but-real overflow now surfaced honestly on both
+desktop and mobile; don't "fix" it by hiding the fade on desktop, the
+underlying scrollability was already there before this session touched
+anything.
+
+## Contact Links: mobile now opens a real window instead of the flyout (2026-09-04)
+
+Following straight on from the round-2 flyout-clipping fix above, the user
+said the portalled-flyout approach still felt "weird" on mobile and asked for
+something simpler: on mobile, tapping the Contact Links dock icon should open
+a normal app window with the two options (LinkedIn, Email), exactly like
+every other dock icon — desktop keeps the original hover flyout, untouched.
+
+This *replaces* the `<body>`-portal fix from the round-2 entry above, not an
+addition to it — the portal code (reparenting, `positionMobileFlyout()`,
+`.dock-flyout-portal` CSS, the outside-click/Escape handling it needed) was
+removed entirely. Mobile no longer touches the flyout DOM at all.
+
+**New pieces**:
+- `src/components/apps/ContactLinksApp.astro` — a new, small app: a header
+  (purple glyph matching the dock icon's gradient, "Contact Links" /
+  "Reach out directly.") plus two tappable cards, one per contact link
+  (LinkedIn / Email), each with an icon, label, the actual URL/address as a
+  detail line, and an arrow. Duplicates the same small `linkGlyphs`/
+  `contactLinks` array `Dock.astro`'s flyout already has (2 entries — not
+  worth a shared module, matches this codebase's existing convention for
+  similarly small per-file bits, e.g. the mouse-tilt script duplicated
+  between `AboutApp.astro` and `WorkApp.astro`).
+- `apps.js`'s `contact-links` entry gained `width: 420, height: 340` (needed
+  for `sizeForDesktop`'s lookup, even though this window is never actually
+  opened via desktop UI in practice — see below). `links: true` is
+  unchanged and still means "excluded from the menu bar / Spotlight",
+  **not** "excluded from having a window" any more — that second meaning is
+  what changed.
+- `index.astro`: removed the `.filter((app) => !app.links)` that used to skip
+  rendering a `<WindowFrame>` for this app entirely — every app in `apps.js`
+  now gets a window (`contact-links` mapped to the new `ContactLinksApp`).
+  It stays closed/hidden (`display: none`, like every app's default state)
+  on desktop since nothing ever calls `openWindow("contact-links")` there.
+- `DesktopScript.astro`'s `.dock-item-links` handling simplified: on
+  `noHover` (touch) devices, the trigger's click handler now just calls
+  `openWindow("contact-links")` and returns early — no more hover-listener
+  setup on those devices at all (previously attached unconditionally,
+  functionally harmless but pointless on a device with no hover). Desktop
+  (non-`noHover`) is the exact original hover-flyout code, unchanged.
+- `desktop.css`: removed the `.dock-flyout-portal` rule block and the
+  `.dock-item-links.open` selector variants (both the base rule and its
+  mobile-media-query duplicate) — `.open` is no longer ever set on anything,
+  since mobile no longer has a click-to-pin flyout state to represent.
+
+**Why `appMeta` (DesktopScript.astro's `apps.filter((app) => !app.links)`
+list used for desktop window sizing) still excludes `contact-links`, and why
+that's fine**: `openWindow()` branches on `isMobile()` — real touch hardware
+that satisfies `noHover` (the only place `openWindow("contact-links")` is
+ever called from) also always satisfies `isMobile()`'s `(pointer: coarse)`
+clause, so the call always takes the `sizeForMobile()` path (a fixed
+near-fullscreen formula that doesn't consult `appMeta` at all), never
+`sizeForDesktop()`'s `appMeta.find(...)` lookup. The `width`/`height` added
+to its `apps.js` entry are there for completeness/consistency with every
+other app, not because anything currently reads them.
+
+**Active-icon highlight added (same session, follow-up)**: the dock icon now
+does get the `.active` dot on mobile while its window is open, matching
+every other dock icon. The naive fix (add `data-open="contact-links"` to the
+wrapper in `Dock.astro`'s markup) was rejected above because it's
+server-rendered, present on *both* desktop and mobile, and would let the
+generic `[data-open]` click handler in `DesktopScript.astro` also fire
+`toggleWindow()` via bubbling on desktop too — reopening the exact
+"weird"-feeling window-on-click behavior the user asked to remove from
+desktop in the first place, and on mobile it would race the custom handler's
+own `openWindow()` call (both firing in the same click) and immediately
+close what it just opened. The actual fix sets the attribute **at
+runtime, in JS, only inside the `noHover` branch**:
+`item.setAttribute("data-open", "contact-links")`. This works safely because
+of *when* it runs, not just *whether* it runs: the generic `[data-open]`
+handler's `document.querySelectorAll("[data-open]")` (which is what attaches
+its own click listener to matching elements) executes earlier in the same
+script, so by the time this line adds the attribute, that snapshot has
+already been taken and moved on — the generic handler never sees this
+element and never attaches anything to it. `setDockActive()` (already called
+by every `openWindow`/`closeWindow`, no changes needed there) then finds it
+via the now-present attribute exactly like any other app icon. On desktop
+the attribute is never set at all, so there's no window state to highlight
+there in the first place — matches the user's "mobile only" ask exactly,
+not as a workaround but because desktop genuinely has no window for this
+icon to reflect.
+
+Verified: opening the window sets `.active` on the icon; switching to a
+different app (mobile's one-window-at-a-time close) correctly clears it
+again (and sets `.active` on the newly-opened app's own icon instead);
+closing via the window's own close button clears it too. Re-confirmed
+desktop is still untouched — `item.getAttribute("data-open")` reads `null`
+there, and clicking the trigger still does nothing but hover-open the
+flyout, exactly as before this whole feature existed.
+
+Verified end-to-end at 375px (mobile): tapping the dock icon opens a
+`contact-links` window with both links (correct hrefs — LinkedIn external,
+Email `mailto:`), closes any other open window first (mobile's existing
+one-window-at-a-time rule, unchanged), and no console errors.
+
+**Correction, same day**: the `window.matchMedia("(hover: none)")` check
+this all originally used (computed once at page load into a `noHover`
+constant) turned out to be the wrong device signal — the user reported real
+desktop hover breaking and clicking wrongly opening the window, which is
+exactly what happens if `noHover` reads `true` on a desktop. Replaced with
+`isMobile()` (the same `(max-width: 900px), (pointer: coarse)` check every
+other mobile/desktop branch in this file already uses — window sizing,
+single-window-at-a-time, resize handles), evaluated **live inside the click
+handler** rather than cached once at load, so it also stays correct if the
+browser is resized across the breakpoint later:
+
+```js
+trigger?.addEventListener("click", (e) => {
+    if (!isMobile()) return; // desktop: click does nothing, hover-only
+    e.stopPropagation();
+    openWindow("contact-links");
+});
+```
+
+The hover `mouseenter`/`mouseleave` listeners are now attached unconditionally
+(no more `if (noHover) { ...; return; }` early exit before them) — harmless
+on touch, since a tap never fires `mouseenter`/`mouseleave` in the first
+place, so this doesn't reintroduce the original touch-hover problem. The
+`item.setAttribute("data-open", "contact-links")` line (for the active-dot
+highlight, see above) also moved out from inside the old `noHover` branch to
+run unconditionally for the same reason — it's inert on desktop since
+`openWindow`/`closeWindow` are simply never called for this id there.
+
+Re-verified at a real (non-zero) 1280×800 viewport — worth noting explicitly,
+since this tool's own Browser pane transiently reports a 0×0
+`window.innerWidth`/`innerHeight` right after clearing a viewport emulation
+(a pane-state artifact, not something a real visitor's browser ever does,
+but one that would have made `isMobile()` read `true` and produced a false
+failure if not caught during verification here): hover correctly sets
+`.hover-open` + `pointer-events: auto` on the flyout, and clicking the
+trigger does **not** open the window (`contact-links`'s `.window` stays
+`display: ""`, no `.active`). Re-verified mobile (375px) still opens the
+window and sets `.active` correctly. No console errors either way.
+
 ## Open items / things the user may still ask for
 - Chatbot (AI terminal like the reference theme has) — explicitly deferred by the
   user as a "maybe later" feature. Do not add Groq/Supabase/any backend for it
