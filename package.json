@@ -11,15 +11,10 @@
         "dev": "astro dev",
         "build": "astro build",
         "preview": "astro preview",
-        "astro": "astro",
-        "predeploy": "npm run build",
-        "deploy": "gh-pages -d dist"
+        "astro": "astro"
     },
     "dependencies": {
         "@fontsource-variable/outfit": "^5.3.0",
         "astro": "^7.2.2"
-    },
-    "devDependencies": {
-        "gh-pages": "^6.3.0"
     }
 }

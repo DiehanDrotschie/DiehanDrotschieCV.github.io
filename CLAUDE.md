@@ -61,7 +61,30 @@ fallback page.
   `<script>` blocks for interactivity
 - Deployed via `.github/workflows/pages.yml` (GitHub Actions → GitHub Pages). Astro 7
   requires **Node ≥22.12**, so CI is pinned to Node 22 — don't drop this back to 20.
-- Also has a manual `npm run deploy` (gh-pages package) as a fallback deploy path
+- **Deploy method (changed 2026-09-06)**: uses GitHub's native Actions deployment
+  (`actions/upload-pages-artifact` + `actions/deploy-pages`), **not** a `gh-pages`
+  branch. Originally this repo used `peaceiris/actions-gh-pages@v4`, which built the
+  site and pushed `dist/` to a separate `gh-pages` branch every deploy — switched
+  away from that specifically so there's no extra branch to maintain, no
+  third-party action in the deploy path, and the repo's Settings → Pages source can
+  just be "GitHub Actions" instead of "Deploy from a branch". The manual `npm run
+  deploy` script (via the `gh-pages` npm package) was removed for the same reason —
+  it existed purely to push to that now-unwanted branch; don't re-add it or the
+  `gh-pages` dependency without a reason to go back to branch-based deploy.
+  **One-time manual step this change needs**: in the repo's GitHub Settings → Pages,
+  the source must be switched to "GitHub Actions" (it was previously "Deploy from a
+  branch" → `gh-pages`) for this workflow to actually publish anywhere — the
+  workflow change alone doesn't flip that setting. The old `gh-pages` branch can be
+  deleted once this is confirmed working, it's not read by anything after this
+  switch.
+- Repo note: `DiehanDrotschieCV.github.io` was renamed to `DiehanCV` on GitHub
+  (confirmed via the redirect message on `git push`/`git remote -v`) — this repo's
+  git remote still points at the old URL, which GitHub silently redirects, so
+  pushes/PRs work either way; only worth updating if that redirect ever stops being
+  reliable. `astro.config.mjs`'s `base: "/DiehanCV/"` and `site`/`homepage` already
+  assumed a project-page subpath (not the `username.github.io`-style root the old
+  repo name implied), so this rename needed **no config changes** — it already
+  matches.
 
 ## Structure
 
