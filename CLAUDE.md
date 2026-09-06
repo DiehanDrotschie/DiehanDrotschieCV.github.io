@@ -829,6 +829,14 @@ actual work — see the recommendation given, then confirmed. Added:
 
 ## Work app rebuilt on ProjectsScreenshotsAndInfo (2026-08-20)
 
+> **`ProjectsScreenshotsAndInfo/` was deleted from the repo on 2026-09-06** — see
+> "ProjectsScreenshotsAndInfo folder deleted" near the end of this file. Everything
+> below that references it as a live, on-disk folder is now describing history
+> (how `public/Projects/` and `projects.js` came to exist), not a currently-true
+> file layout. Don't tell a future session to "check `content.md`" or "re-copy from
+> `ProjectsScreenshotsAndInfo/`" — that source no longer exists in the working tree
+> (it's still in git history if ever truly needed).
+
 User pointed at a repo-root folder, `ProjectsScreenshotsAndInfo/<slug>/`, containing
 a `content.md` write-up + screenshots per project (10 projects total) and asked for
 the Work app to be rebuilt around it: cards that open into a screenshot carousel with
@@ -2294,6 +2302,32 @@ failure if not caught during verification here): hover correctly sets
 trigger does **not** open the window (`contact-links`'s `.window` stays
 `display: ""`, no `.active`). Re-verified mobile (375px) still opens the
 window and sets `.active` correctly. No console errors either way.
+
+## ProjectsScreenshotsAndInfo folder deleted (2026-09-06)
+
+User asked whether the repo-root `ProjectsScreenshotsAndInfo/` folder was still
+needed, given the Work app rebuild above already drew from it. Verified fully
+before deleting (not assumed): every one of its 56 tracked files (10 project
+`content.md` write-ups + all screenshots) was diffed by filename against
+`public/Projects/` — byte-for-byte identical file lists, folder for folder — and
+every one of the 10 project slugs was confirmed present in `src/data/projects.js`.
+Flagged to the user first that CLAUDE.md's own workflow (see the section above)
+treated this folder as the ongoing canonical/full-resolution source for future
+edits, not just a one-time input — they confirmed delete-anyway. Removed via
+`git rm -r` + commit, so it's gone from the working tree but still recoverable
+from git history if ever genuinely needed (this is a feature branch, not yet
+merged).
+
+**Practical effect on how future project-content changes work**: there is no
+longer a full-detail source to "edit first, then re-sync `projects.js`" —
+`src/data/projects.js` (curated) and the derived images in `public/Projects/`
+are now the only copies of this content that exist anywhere in this repo. Any
+future edit to a project's description/highlights/stack goes directly into
+`projects.js`; any future screenshot change (add/replace/re-derive a blurry one,
+etc.) needs a new source image supplied fresh — there's no local full-resolution
+original left to fall back on the way the propagen-screenshot re-derivation
+(see "Propagen/real-estate screenshots: restored native width..." above) was
+able to.
 
 ## Open items / things the user may still ask for
 - Chatbot (AI terminal like the reference theme has) — explicitly deferred by the
