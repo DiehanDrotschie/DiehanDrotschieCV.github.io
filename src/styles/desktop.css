@@ -1,0 +1,886 @@
+.desktop {
+    position: fixed;
+    inset: 0;
+    /* `inset: 0` on a fixed element should already span the viewport, but on
+       mobile browsers whose chrome (URL bar) shows/hides, fixed elements are
+       sized to the *initial* viewport and don't grow when the chrome
+       collapses — leaving a gap at the bottom that shows this fallback
+       color through. Explicit height in dynamic-viewport units (falling
+       back to plain vh where dvh isn't supported) keeps it pinned to the
+       real visible area instead. */
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: #0b1a2e;
+}
+
+/* Menu bar — Apple "Liquid Glass" material: a brighter, more transparent
+   layered glass (a soft top-lit highlight gradient over a thin dark tint)
+   with heavier blur/saturate so it visibly samples the wallpaper behind it,
+   plus an inset top hairline to read as a lit glass edge rather than a flat
+   tinted panel. */
+.menu-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 500;
+    background: linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.16) 0%,
+            rgba(255, 255, 255, 0.03) 55%,
+            rgba(255, 255, 255, 0) 100%
+        ),
+        rgba(16, 19, 26, 0.4);
+    backdrop-filter: blur(34px) saturate(2.1);
+    -webkit-backdrop-filter: blur(34px) saturate(2.1);
+    color: #f4f1ec;
+    font-size: 0.85rem;
+    user-select: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 12px 30px rgba(0, 0, 0, 0.16);
+}
+
+.menu-row {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+}
+
+.menu-left,
+.menu-right {
+    display: flex;
+    align-items: center;
+    gap: 1.35rem;
+}
+
+.menu-logo {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #ffe066, #ff7a1a);
+    flex-shrink: 0;
+}
+
+.menu-bar .brand {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.menu-bar button.menu-item {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    opacity: 0.78;
+    padding: 0.3rem 0.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.menu-bar button.menu-item:hover {
+    opacity: 1;
+}
+
+.menu-bar kbd {
+    font-family: inherit;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+}
+
+.menu-bar .clock {
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-display);
+    opacity: 0.8;
+}
+
+.hint-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    height: 26px;
+    padding: 0 1rem;
+    font-size: 0.72rem;
+    color: rgba(244, 241, 236, 0.6);
+    background: rgba(16, 19, 26, 0.22);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hint-row span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.hint-fill {
+    flex: 1;
+}
+
+/* Windows */
+.window {
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    display: none;
+    flex-direction: column;
+    background: rgba(246, 244, 240, 0.88);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 10px;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.4) inset,
+        0 30px 70px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    min-width: 280px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.window.open {
+    display: flex;
+    animation: window-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes window-in {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(10px);
+        filter: blur(6px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .window.open {
+        animation: none;
+    }
+}
+
+.window-titlebar {
+    display: flex;
+    align-items: center;
+    padding: 0.55rem 0.85rem;
+    background: rgba(255, 255, 255, 0.35);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    cursor: grab;
+    user-select: none;
+    position: relative;
+}
+
+.window-titlebar:active {
+    cursor: grabbing;
+}
+
+.window-dots {
+    display: flex;
+    gap: 0.45rem;
+    z-index: 1;
+}
+
+.window-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background-size: cover;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+}
+
+.window-dot.close {
+    background: radial-gradient(circle at 30% 30%, #ff8a80, #ff5f57 60%, #e0443e);
+}
+
+.window-dot.minimize {
+    background: radial-gradient(circle at 30% 30%, #ffe08a, #febc2e 60%, #dea123);
+}
+
+.window-dot.zoom {
+    background: radial-gradient(circle at 30% 30%, #6fe08a, #28c840 60%, #1aab2e);
+}
+
+/* Window bounds transitions — only active while a maximize/restore toggle is
+   in flight, so manual drag/resize (which sets left/top/width/height on every
+   mousemove) never gets a laggy transition fighting it. */
+.window.bounds-animating {
+    transition:
+        left 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        top 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.window.maximized .window-titlebar {
+    cursor: default;
+}
+
+/* Minimize / restore — window shrinks toward its dock icon and back. */
+@keyframes minimize-out {
+    from {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+        filter: blur(0);
+    }
+    to {
+        opacity: 0;
+        transform: translate(var(--minimize-dx, 0px), var(--minimize-dy, 0px)) scale(0.08);
+        filter: blur(3px);
+    }
+}
+
+@keyframes minimize-in {
+    from {
+        opacity: 0;
+        transform: translate(var(--minimize-dx, 0px), var(--minimize-dy, 0px)) scale(0.08);
+        filter: blur(3px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.window.minimizing {
+    animation: minimize-out 320ms cubic-bezier(0.4, 0, 1, 1) forwards;
+    pointer-events: none;
+}
+
+.window.restoring {
+    animation: minimize-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .window.minimizing,
+    .window.restoring,
+    .window.bounds-animating {
+        animation: none;
+        transition: none;
+    }
+}
+
+.dock-item.minimized .dock-icon {
+    opacity: 0.55;
+    filter: saturate(0.6);
+}
+
+/* Resize handles — thin invisible strips + corners around the window edge. */
+.resize-handle {
+    position: absolute;
+    z-index: 2;
+}
+
+.resize-n,
+.resize-s {
+    left: 10px;
+    right: 10px;
+    height: 6px;
+    cursor: ns-resize;
+}
+
+.resize-n {
+    top: -3px;
+}
+
+.resize-s {
+    bottom: -3px;
+}
+
+.resize-e,
+.resize-w {
+    top: 10px;
+    bottom: 10px;
+    width: 6px;
+    cursor: ew-resize;
+}
+
+.resize-e {
+    right: -3px;
+}
+
+.resize-w {
+    left: -3px;
+}
+
+.resize-ne,
+.resize-nw,
+.resize-se,
+.resize-sw {
+    width: 14px;
+    height: 14px;
+}
+
+.resize-ne {
+    top: -4px;
+    right: -4px;
+    cursor: nesw-resize;
+}
+
+.resize-nw {
+    top: -4px;
+    left: -4px;
+    cursor: nwse-resize;
+}
+
+.resize-se {
+    bottom: -4px;
+    right: -4px;
+    cursor: nwse-resize;
+}
+
+.resize-sw {
+    bottom: -4px;
+    left: -4px;
+    cursor: nesw-resize;
+}
+
+.window-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-secondary);
+}
+
+/* `.window` is a flex column (titlebar + this); without `flex: 1` here,
+   `.window-body` only ever grows to fit its own content, so resizing/
+   maximizing a window taller than its content left the extra space below
+   it showing `.window`'s own off-white/cream background instead of this
+   element's — a solid-color block at the bottom of any window taller than
+   what it needs. `min-height: 0` is required alongside `flex: 1` for a
+   flex child to actually respect `overflow-y: auto` and scroll internally
+   instead of forcing the flex item (and so the window) to grow to fit it. */
+.window-body {
+    flex: 1;
+    min-height: 0;
+    padding: 1.5rem;
+    /* `overflow-x: hidden` is explicit, not incidental — per the CSS spec,
+       declaring `overflow-y: auto` alone (with overflow-x left at its
+       default `visible`) forces overflow-x to compute to `auto` too, making
+       `.window-body` an unintended *second* horizontal scroll container
+       nested around anything that manages its own (e.g. Achievements'
+       `.table-scroll`). Confirmed live: `.window-body` was reporting
+       `overflow-x: auto` despite having nothing that actually needs to
+       scroll sideways at this level (the mobile-overflow audit already
+       established every app's horizontal overflow is handled by its own
+       inner scroll container). Nested auto-scroll regions are a known
+       source of touch swipes landing on the wrong (outer) scroller instead
+       of the intended inner one — this removes the ambiguity so a
+       horizontal swipe that starts on `.table-scroll` can only ever be
+       claimed by `.table-scroll` itself. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.35);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(29, 27, 22, 0.25) transparent;
+}
+
+.window-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.window-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.window-body::-webkit-scrollbar-thumb {
+    background: rgba(29, 27, 22, 0.2);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.window-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(29, 27, 22, 0.35);
+    background-clip: padding-box;
+}
+
+.app-content h2:first-child,
+.app-content h3:first-child {
+    margin-top: 0;
+}
+
+/* Dock — same Liquid Glass material as the menu bar (layered highlight +
+   thin dark tint, heavier blur/saturate), pushed toward a fully-rounded
+   floating pill rather than a softly-rounded rectangle, with an inset top
+   hairline and a soft bottom inner shadow to read as a lit glass edge. */
+.dock {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: flex-end;
+    gap: 0.65rem;
+    padding: 0.55rem 0.85rem;
+    background: linear-gradient(
+            160deg,
+            rgba(255, 255, 255, 0.22) 0%,
+            rgba(255, 255, 255, 0.04) 55%,
+            rgba(255, 255, 255, 0) 100%
+        ),
+        rgba(20, 23, 30, 0.36);
+    backdrop-filter: blur(38px) saturate(2.2);
+    -webkit-backdrop-filter: blur(38px) saturate(2.2);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 28px;
+    z-index: 500;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+        0 20px 45px rgba(0, 0, 0, 0.32);
+}
+
+.dock-item {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dock-item:hover {
+    transform: translateY(-10px) scale(1.14);
+}
+
+.dock-item:active {
+    transform: translateY(-4px) scale(1.02);
+    transition-duration: 0.1s;
+}
+
+.dock-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -6px 10px rgba(0, 0, 0, 0.16),
+        0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass sheen: a soft diagonal highlight over the icon's own brand color —
+   real macOS icons stay colorful under Liquid Glass (it's the surrounding
+   chrome that goes translucent), this just gives them the same lit-glass
+   surface language as the dock/menu bar they sit in. */
+.dock-icon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 48%);
+    pointer-events: none;
+}
+
+.dock-icon svg {
+    position: relative;
+    z-index: 1;
+    width: 26px;
+    height: 26px;
+}
+
+.dock-label {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(24, 27, 34, 0.65);
+    backdrop-filter: blur(18px) saturate(1.8);
+    -webkit-backdrop-filter: blur(18px) saturate(1.8);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #f4f1ec;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 7px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+}
+
+.dock-item:hover .dock-label {
+    opacity: 1;
+}
+
+.dock-item.active::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: white;
+}
+
+/* Contact Links dock item — hover flyout instead of a window */
+.dock-item-links .dock-label {
+    display: none;
+}
+
+.dock-trigger {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dock-flyout {
+    position: absolute;
+    bottom: calc(100% + 14px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 160px;
+    padding: 0.4rem;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02) 60%),
+        rgba(20, 23, 30, 0.62);
+    backdrop-filter: blur(32px) saturate(2);
+    -webkit-backdrop-filter: blur(32px) saturate(2);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 20px 40px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 20;
+}
+
+/* Not a raw `:hover` — the flyout sits 14px above the trigger with nothing
+   rendered in between, so a plain CSS :hover loses/regains state exactly
+   while the pointer crosses that gap, snapping pointer-events to `none`
+   mid-crossing and stranding the flyout unclickable. `.hover-open` is a JS-
+   managed class (DesktopScript.astro) with a short close-delay that survives
+   the crossing instead. `:focus-within` (keyboard) has no such gap problem
+   and stays as a direct trigger. Desktop-only: on touch devices the trigger
+   opens `contact-links` as a real window instead (see DesktopScript.astro
+   and ContactLinksApp.astro) rather than trying to make this flyout itself
+   work on tap — `.dock`'s mobile `overflow-y: auto` forces its overflow-x to
+   `auto` too (unset properties follow the CSS spec's paired-axis rule), which
+   clips this flyout to nothing since it pops out sideways, outside `.dock`'s
+   own box. A `.dock-item-links.open`/portalled-flyout variant of this rule
+   existed briefly to work around that clip but was dropped in favor of the
+   simpler window-based approach. */
+.dock-item-links.hover-open .dock-flyout,
+.dock-item-links:focus-within .dock-flyout {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.dock-flyout-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    color: #f4f1ec;
+    text-decoration: none;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.dock-flyout-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dock-flyout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(160deg, #c9a6ff 0%, #7b4fe0 100%);
+    color: white;
+    flex-shrink: 0;
+}
+
+.dock-flyout-icon svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* Spotlight */
+.spotlight-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 14vh;
+    z-index: 1000;
+}
+
+.spotlight-overlay.open {
+    display: flex;
+}
+
+.spotlight-box {
+    width: min(560px, 90vw);
+    background: rgba(28, 32, 38, 0.85);
+    backdrop-filter: blur(28px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    color: #f4f1ec;
+}
+
+.spotlight-search-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1.25rem;
+}
+
+.spotlight-icon {
+    width: 20px;
+    height: 20px;
+    color: rgba(244, 241, 236, 0.6);
+    flex-shrink: 0;
+}
+
+.spotlight-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 1rem 0;
+    font-size: 1.15rem;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+}
+
+.spotlight-input::placeholder {
+    color: rgba(244, 241, 236, 0.45);
+}
+
+.spotlight-results {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.spotlight-result {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.55rem 1.25rem;
+    background: none;
+    border: none;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.spotlight-result-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.spotlight-result-icon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 48%);
+    pointer-events: none;
+}
+
+.spotlight-result-icon svg {
+    position: relative;
+    z-index: 1;
+    width: 16px;
+    height: 16px;
+}
+
+.spotlight-result:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Mobile / touch — same desktop shell, adapted layout:
+   dock moves to a vertical rail on the right, menu bar trims to
+   essentials, windows open one at a time near-fullscreen (see
+   DesktopScript.astro's isMobile()/sizeForMobile()). */
+@media (max-width: 900px), (pointer: coarse) {
+    .hint-row {
+        display: none;
+    }
+
+    .menu-right {
+        gap: 0.75rem;
+    }
+
+    .menu-bar button.menu-item#spotlight-trigger kbd {
+        display: none;
+    }
+
+    .dock {
+        top: 50%;
+        bottom: auto;
+        left: auto;
+        right: 10px;
+        transform: translateY(-50%);
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 0.5rem;
+        max-height: calc(100vh - 90px);
+        overflow-y: auto;
+    }
+
+    .dock-item {
+        width: 46px;
+        height: 46px;
+    }
+
+    .dock-item:hover {
+        transform: scale(1.08);
+    }
+
+    .dock-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .dock-label {
+        bottom: auto;
+        top: 50%;
+        left: auto;
+        right: calc(100% + 10px);
+        transform: translateY(-50%);
+    }
+
+    .dock-item.active::after {
+        bottom: auto;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .dock-flyout {
+        bottom: auto;
+        left: auto;
+        top: 50%;
+        right: calc(100% + 14px);
+        transform: translateY(-50%) translateX(6px);
+    }
+
+    .dock-item-links.hover-open .dock-flyout,
+    .dock-item-links:focus-within .dock-flyout {
+        transform: translateY(-50%) translateX(0);
+    }
+
+    .window-body {
+        padding: 1.1rem;
+    }
+
+    /* Resizing/maximizing is a desktop-pointer affordance only — mobile windows
+       are fixed near-fullscreen (sizeForMobile()) and untouchable here. */
+    .resize-handle {
+        display: none;
+    }
+}
+
+/* Liquid Glass accessibility fallback — visitors who've asked their system
+   for reduced transparency get solid opaque chrome instead of blurred glass.
+   Support for this media feature is still WebKit-led, so this is a
+   progressive enhancement, not the primary a11y path (contrast/focus/motion
+   are handled elsewhere already). */
+@media (prefers-reduced-transparency: reduce) {
+    .menu-bar,
+    .hint-row,
+    .dock,
+    .dock-label,
+    .dock-flyout,
+    .spotlight-box {
+        background: rgb(22, 25, 32);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+/* Content pop-in — the app's own content stages in with a quick stagger right
+   after the window's scale/blur entrance, instead of appearing all at once.
+   Scoped to direct children of .app-content so nested elements (list items,
+   grid tiles) don't each re-trigger their own delay. */
+.window.open .app-content > * {
+    animation: content-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.window.open .app-content > *:nth-child(1) {
+    animation-delay: 40ms;
+}
+.window.open .app-content > *:nth-child(2) {
+    animation-delay: 80ms;
+}
+.window.open .app-content > *:nth-child(3) {
+    animation-delay: 120ms;
+}
+.window.open .app-content > *:nth-child(4) {
+    animation-delay: 160ms;
+}
+.window.open .app-content > *:nth-child(n + 5) {
+    animation-delay: 200ms;
+}
+
+@keyframes content-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .window.open .app-content > * {
+        animation: none;
+    }
+}

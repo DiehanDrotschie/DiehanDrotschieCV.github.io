@@ -1,0 +1,933 @@
+---
+import { projects } from "../../data/projects.js";
+
+const base = import.meta.env.BASE_URL;
+const imgSrc = (slug, file) => `${base}Projects/${slug}/${file}`;
+
+// Client script only needs resolved image URLs + the same fields already in
+// projects.js; built here so the script doesn't need to know about `base`.
+const clientProjects = projects.map((p) => ({
+    slug: p.slug,
+    title: p.title,
+    context: p.context ?? "",
+    stack: p.stack ?? [],
+    role: p.role ?? "",
+    summary: p.summary ?? "",
+    highlights: p.highlights ?? [],
+    images: (p.images ?? []).map((img) => ({
+        src: imgSrc(p.slug, img.file),
+        caption: img.caption ?? "",
+    })),
+}));
+---
+
+<div class="app-content work-app">
+    <h2>Portfolio</h2>
+    <p class="text-secondary">
+        Projects I've built, from client work to personal builds - open any card for
+        screenshots and the technical write-up.
+    </p>
+    <div class="grid grid-2 project-grid">
+        {
+            projects.map((project) => (
+                <button type="button" class="card project-card" data-slug={project.slug}>
+                    <div class="project-thumb">
+                        <img
+                            src={imgSrc(project.slug, project.images[0].file)}
+                            alt={project.title}
+                            loading="lazy"
+                        />
+                        {project.images.length > 1 && (
+                            <span class="project-badge">{project.images.length} photos</span>
+                        )}
+                    </div>
+                    <div class="project-body">
+                        <h4>{project.title}</h4>
+                        {project.context && (
+                            <p class="text-secondary project-context">{project.context}</p>
+                        )}
+                        <div class="project-stack">
+                            {project.stack.slice(0, 4).map((s) => (
+                                <span class="chip project-chip">{s}</span>
+                            ))}
+                            {project.stack.length > 4 && (
+                                <span class="chip project-chip project-chip-more">
+                                    +{project.stack.length - 4}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </button>
+            ))
+        }
+    </div>
+
+    <dialog class="project-dialog" data-projects={JSON.stringify(clientProjects)}>
+        <button type="button" class="gallery-close" aria-label="Close">&times;</button>
+        <div class="project-dialog-scroll">
+            <div class="gallery-main">
+                <button type="button" class="gallery-nav gallery-prev" aria-label="Previous image">&#8249;</button>
+                <img class="gallery-image" src="" alt="" decoding="async" fetchpriority="high" />
+                <button type="button" class="gallery-nav gallery-next" aria-label="Next image">&#8250;</button>
+                <button type="button" class="gallery-zoom" aria-label="View full size">&#x26F6;</button>
+            </div>
+            <div class="gallery-thumbs"></div>
+            <p class="gallery-caption"></p>
+
+            <div class="project-detail">
+                <div class="project-detail-header">
+                    <h3 class="project-detail-title"></h3>
+                    <p class="text-secondary project-detail-context"></p>
+                </div>
+                <div class="project-detail-stack"></div>
+                <p class="project-detail-role"></p>
+                <p class="text-secondary project-detail-summary"></p>
+                <div class="project-detail-highlights">
+                    <h4>Technical highlights</h4>
+                    <ul></ul>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="lightbox">
+        <button type="button" class="lightbox-close" aria-label="Close full size view">&times;</button>
+        <button type="button" class="gallery-nav lightbox-prev" aria-label="Previous image">&#8249;</button>
+        <div class="lightbox-viewport">
+            <img class="lightbox-image" src="" alt="" decoding="async" />
+        </div>
+        <button type="button" class="gallery-nav lightbox-next" aria-label="Next image">&#8250;</button>
+        <p class="lightbox-caption"></p>
+        <div class="lightbox-zoom-controls">
+            <button type="button" class="lightbox-zoom-out" aria-label="Zoom out">&#8722;</button>
+            <span class="lightbox-zoom-level">100%</span>
+            <button type="button" class="lightbox-zoom-in" aria-label="Zoom in">&#43;</button>
+        </div>
+    </dialog>
+</div>
+
+<style>
+    .project-grid {
+        margin-top: 1.5rem;
+    }
+
+    /* .grid-2 (global.css) is `repeat(auto-fit, minmax(280px, 1fr))` — on
+       mobile the window itself (sizeForMobile() in DesktopScript.astro) is
+       much narrower than 280px of available content width, so that minmax
+       floor forced every card wider than the window and got clipped by
+       `.window`'s `overflow: hidden` — visible only from the left edge,
+       which read as "not centered" since you could never see a card's
+       right side. A single unconstrained column always exactly fits
+       whatever width is actually available. */
+    @media (max-width: 900px), (pointer: coarse) {
+        .project-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .project-card {
+        position: relative;
+        text-align: left;
+        padding: 0;
+        overflow: hidden;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+        border-color: rgba(31, 143, 224, 0.16);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .project-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(31, 143, 224, 0.4);
+        box-shadow: 0 12px 26px rgba(31, 143, 224, 0.22);
+    }
+
+    /* Every card is the same fixed size, deliberately — the grid used to give
+       the "featured" project a 2-column span and a taller thumb, but the user
+       wants uniform card sizing even at the cost of some content looking
+       tight (title clamped to 2 lines, context truncated to 1 line, stack
+       chips capped to one row) rather than cards of different sizes. Don't
+       reintroduce a featured/span-2 card without checking back — this was a
+       deliberate reversal, not an oversight. */
+    .project-card {
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .project-thumb {
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+        height: 160px;
+    }
+
+    .project-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.35s ease;
+    }
+
+    .project-card:hover img {
+        transform: scale(1.04);
+    }
+
+    .project-badge {
+        position: absolute;
+        right: 0.6rem;
+        bottom: 0.6rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        background: linear-gradient(160deg, #6fd0ff 0%, #1f8fe0 100%);
+        color: white;
+        font-size: 0.72rem;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(31, 143, 224, 0.35);
+    }
+
+    .project-body {
+        padding: 0.85rem 1.1rem 1rem;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Clamped/truncated so every card's body content occupies the same
+       height regardless of how long a given project's title/context/stack
+       actually is — part of the fixed-card-size approach above. */
+    .project-body h4 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 0 0 0.4rem;
+    }
+
+    .project-context {
+        margin: 0 0 0.55rem;
+        font-size: 0.78rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .project-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        overflow: hidden;
+        max-height: 1.6rem;
+    }
+
+    .project-chip {
+        padding: 0.2rem 0.55rem;
+        font-size: 0.72rem;
+        background: rgba(31, 143, 224, 0.1);
+        color: #1f8fe0;
+    }
+
+    .project-chip-more {
+        background: rgba(21, 23, 28, 0.08);
+        color: var(--text-secondary);
+    }
+
+    /* Dialog now carries a scrollable image carousel + the full technical
+       write-up below it, so the dialog itself scrolls as one column instead
+       of being sized purely around the image like the old lightbox. */
+    .project-dialog {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 0;
+        width: min(94vw, 920px);
+        max-height: 90vh;
+        background: rgba(16, 19, 24, 0.92);
+        backdrop-filter: blur(24px) saturate(1.4);
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+        color: white;
+    }
+
+    .project-dialog::backdrop {
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+    }
+
+    .project-dialog-scroll {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .gallery-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 50%;
+        color: white;
+        font-size: 1.4rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        z-index: 2;
+    }
+
+    .gallery-close:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    .gallery-main {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.25);
+    }
+
+    .gallery-main img {
+        width: 100%;
+        max-height: 42vh;
+        object-fit: contain;
+        margin: 0 auto;
+    }
+
+    .gallery-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: white;
+        font-size: 1.75rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        z-index: 2;
+    }
+
+    .gallery-nav:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    .gallery-prev {
+        left: 8px;
+    }
+
+    .gallery-next {
+        right: 8px;
+    }
+
+    .gallery-nav:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    .gallery-main img {
+        cursor: zoom-in;
+    }
+
+    .gallery-zoom {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: white;
+        font-size: 1.1rem;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        z-index: 2;
+    }
+
+    .gallery-zoom:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* Fullscreen "open image fully" view. Reuses the same images/index state
+       as the main carousel (see the script below) so prev/next and the
+       thumbnail strip stay in sync whichever view you close from. */
+    /* No `display` here on purpose — a <dialog> with no `open` attribute is
+       `display: none` by default (browser UA stylesheet), and author CSS
+       always wins over UA styles regardless of selector specificity. A
+       `display: flex` on the bare `.lightbox` selector overrode that default
+       and rendered the closed dialog inline in the page flow at 100vw×100vh
+       — a near-black box with its close button visible, at the bottom of
+       whatever content came before it. `display: flex` belongs only on
+       `.lightbox[open]`, below, so it only takes effect once `showModal()`
+       actually opens it. */
+    .lightbox {
+        border: none;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+        max-height: 100vh;
+        background: rgba(8, 9, 11, 0.97);
+        backdrop-filter: blur(12px);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lightbox[open] {
+        display: flex;
+    }
+
+    .lightbox::backdrop {
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    /* At zoom 1 the viewport just contains the image (object-fit: contain).
+       Zooming in switches the image to an explicit pixel width (set in the
+       script below, from its measured contain-fit size × zoom level) and
+       lets this container scroll so the zoomed-in image can be panned. */
+    .lightbox-viewport {
+        max-width: 92vw;
+        max-height: 78vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+
+    .lightbox-image {
+        max-width: 92vw;
+        max-height: 78vh;
+        object-fit: contain;
+    }
+
+    .lightbox-viewport.is-zoomed {
+        display: block;
+        cursor: grab;
+    }
+
+    .lightbox-viewport.is-zoomed.is-panning {
+        cursor: grabbing;
+    }
+
+    .lightbox-viewport.is-zoomed .lightbox-image {
+        max-width: none;
+        max-height: none;
+    }
+
+    .lightbox-caption {
+        position: absolute;
+        left: 0;
+        right: 3.5rem;
+        bottom: 1.25rem;
+        text-align: center;
+        color: #ddd;
+        font-size: 0.9rem;
+        margin: 0;
+        padding: 0 2rem;
+    }
+
+    .lightbox-zoom-controls {
+        position: absolute;
+        right: 20px;
+        bottom: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(10px);
+    }
+
+    .lightbox-zoom-in,
+    .lightbox-zoom-out {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+
+    .lightbox-zoom-in:hover:not(:disabled),
+    .lightbox-zoom-out:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .lightbox-zoom-in:disabled,
+    .lightbox-zoom-out:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+
+    .lightbox-zoom-level {
+        min-width: 3.2rem;
+        text-align: center;
+        color: #ddd;
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 50%;
+        color: white;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    .lightbox-prev {
+        left: 20px;
+    }
+
+    .lightbox-next {
+        right: 20px;
+    }
+
+    .gallery-thumbs {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    /* :global() is required here — these <img> thumbnails are created via
+       document.createElement() in the script below, not authored in this
+       file's template, so Astro's scoped-style attribute (which it stamps
+       onto every element IN the template at build time) never lands on
+       them. A scoped `.gallery-thumbs img` rule silently never matches a
+       JS-created img and it falls back to its natural size — which is
+       exactly what broke this (thumbnails rendering at ~700px instead of
+       44px and pushing the write-up thousands of pixels down). Any future
+       dynamically-created element in this file needs the same treatment. */
+    .gallery-thumbs :global(img) {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0.4;
+        border: 2px solid transparent;
+        transition: opacity 0.2s, border-color 0.2s;
+    }
+
+    .gallery-thumbs :global(img.active) {
+        opacity: 1;
+        border-color: white;
+    }
+
+    .gallery-caption {
+        text-align: center;
+        color: #bbb;
+        font-size: 0.85rem;
+        padding: 0 1.25rem 0.75rem;
+        margin: 0;
+        min-height: 1.2em;
+    }
+
+    .project-detail {
+        padding: 1rem 1.5rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .project-detail-header h3 {
+        margin: 0 0 0.15rem;
+        color: white;
+    }
+
+    .project-detail-context {
+        margin: 0 0 0.85rem;
+        font-size: 0.85rem;
+        color: rgba(244, 241, 236, 0.6);
+    }
+
+    .project-detail-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.85rem;
+    }
+
+    /* Same JS-created-element scoping issue as the thumbnails above — these
+       chips are appended via document.createElement() in openProject(). */
+    .project-detail-stack :global(.chip) {
+        background: rgba(111, 208, 255, 0.14);
+        color: #8fd8ff;
+    }
+
+    .project-detail-role {
+        margin: 0 0 0.75rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 0.85rem;
+        color: rgba(244, 241, 236, 0.85);
+    }
+
+    .project-detail-role:empty,
+    .project-detail-context:empty {
+        display: none;
+    }
+
+    .project-detail-summary {
+        color: rgba(244, 241, 236, 0.75);
+        margin: 0 0 1rem;
+    }
+
+    .project-detail-highlights h4 {
+        margin: 0 0 0.6rem;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(244, 241, 236, 0.5);
+    }
+
+    .project-detail-highlights ul {
+        list-style: none;
+        margin: 0 0 1.1rem;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+
+    /* Same JS-created-element scoping issue — these <li>s are appended via
+       document.createElement() in openProject(). */
+    .project-detail-highlights :global(li) {
+        position: relative;
+        padding-left: 1.15rem;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: rgba(244, 241, 236, 0.85);
+    }
+
+    .project-detail-highlights :global(li)::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.55rem;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: linear-gradient(160deg, #6fd0ff 0%, #1f8fe0 100%);
+    }
+
+</style>
+
+<script>
+    document.querySelectorAll<HTMLElement>(".work-app").forEach((root) => {
+        const dialog = root.querySelector<HTMLDialogElement>(".project-dialog");
+        const galleryImage = root.querySelector<HTMLImageElement>(".gallery-image");
+        const galleryThumbs = root.querySelector<HTMLElement>(".gallery-thumbs");
+        const galleryCaption = root.querySelector<HTMLElement>(".gallery-caption");
+        const prevBtn = root.querySelector<HTMLButtonElement>(".gallery-prev");
+        const nextBtn = root.querySelector<HTMLButtonElement>(".gallery-next");
+        const closeBtn = root.querySelector<HTMLButtonElement>(".gallery-close");
+        const zoomBtn = root.querySelector<HTMLButtonElement>(".gallery-zoom");
+
+        const lightbox = root.querySelector<HTMLDialogElement>(".lightbox");
+        const lightboxViewport = root.querySelector<HTMLElement>(".lightbox-viewport");
+        const lightboxImage = root.querySelector<HTMLImageElement>(".lightbox-image");
+        const lightboxCaption = root.querySelector<HTMLElement>(".lightbox-caption");
+        const lightboxPrev = root.querySelector<HTMLButtonElement>(".lightbox-prev");
+        const lightboxNext = root.querySelector<HTMLButtonElement>(".lightbox-next");
+        const lightboxClose = root.querySelector<HTMLButtonElement>(".lightbox-close");
+        const zoomInBtn = root.querySelector<HTMLButtonElement>(".lightbox-zoom-in");
+        const zoomOutBtn = root.querySelector<HTMLButtonElement>(".lightbox-zoom-out");
+        const zoomLevelEl = root.querySelector<HTMLElement>(".lightbox-zoom-level");
+
+        const detailTitle = root.querySelector<HTMLElement>(".project-detail-title");
+        const detailContext = root.querySelector<HTMLElement>(".project-detail-context");
+        const detailStack = root.querySelector<HTMLElement>(".project-detail-stack");
+        const detailRole = root.querySelector<HTMLElement>(".project-detail-role");
+        const detailSummary = root.querySelector<HTMLElement>(".project-detail-summary");
+        const detailHighlights = root.querySelector<HTMLElement>(".project-detail-highlights ul");
+        const scrollArea = root.querySelector<HTMLElement>(".project-dialog-scroll");
+
+        type ProjectImage = { src: string; caption: string };
+        type Project = {
+            slug: string;
+            title: string;
+            context: string;
+            stack: string[];
+            role: string;
+            summary: string;
+            highlights: string[];
+            images: ProjectImage[];
+        };
+
+        const projects: Project[] = JSON.parse(dialog?.dataset.projects ?? "[]");
+
+        let images: ProjectImage[] = [];
+        let index = 0;
+
+        function renderImage() {
+            if (!galleryImage || !galleryCaption || !galleryThumbs) return;
+            const current = images[index];
+            galleryImage.src = current?.src ?? "";
+            galleryImage.alt = current?.caption || "Project screenshot";
+            galleryCaption.textContent = current?.caption ?? "";
+            galleryThumbs.querySelectorAll("img").forEach((thumb, i) => {
+                thumb.classList.toggle("active", i === index);
+            });
+            if (prevBtn) prevBtn.disabled = images.length <= 1;
+            if (nextBtn) nextBtn.disabled = images.length <= 1;
+
+            if (lightbox?.open) renderLightbox();
+        }
+
+        // Zoom is relative to the "fit to screen" size (100%), not native
+        // pixel size — baseSize is that fit-to-screen width/height in px,
+        // measured from the image's natural dimensions once it loads, and
+        // zoom multiplies it. Panning at zoom > 1 is just native scrolling:
+        // the viewport gets overflow:auto and the image gets an explicit
+        // pixel width larger than it, so drag-to-pan (below) is just
+        // adjusting scrollLeft/scrollTop.
+        const ZOOM_MIN = 1;
+        const ZOOM_MAX = 6;
+        const ZOOM_STEP = 0.25;
+        let zoom = ZOOM_MIN;
+        let baseWidth = 0;
+        let baseHeight = 0;
+
+        function updateZoomUI() {
+            if (zoomLevelEl) zoomLevelEl.textContent = `${Math.round(zoom * 100)}%`;
+            if (zoomOutBtn) zoomOutBtn.disabled = zoom <= ZOOM_MIN;
+            if (zoomInBtn) zoomInBtn.disabled = zoom >= ZOOM_MAX;
+        }
+
+        function applyZoom() {
+            if (!lightboxImage || !lightboxViewport) return;
+            if (zoom <= ZOOM_MIN || !baseWidth) {
+                lightboxImage.style.width = "";
+                lightboxImage.style.height = "";
+                lightboxViewport.classList.remove("is-zoomed");
+            } else {
+                lightboxImage.style.width = `${baseWidth * zoom}px`;
+                lightboxImage.style.height = `${baseHeight * zoom}px`;
+                lightboxViewport.classList.add("is-zoomed");
+            }
+            updateZoomUI();
+        }
+
+        function resetZoom() {
+            zoom = ZOOM_MIN;
+            applyZoom();
+            if (lightboxViewport) {
+                lightboxViewport.scrollLeft = 0;
+                lightboxViewport.scrollTop = 0;
+            }
+        }
+
+        function computeBaseSize() {
+            if (!lightboxImage?.naturalWidth) return;
+            const maxW = window.innerWidth * 0.92;
+            const maxH = window.innerHeight * 0.78;
+            const ratio = Math.min(maxW / lightboxImage.naturalWidth, maxH / lightboxImage.naturalHeight, 1);
+            baseWidth = lightboxImage.naturalWidth * ratio;
+            baseHeight = lightboxImage.naturalHeight * ratio;
+        }
+
+        function renderLightbox() {
+            if (!lightboxImage || !lightboxCaption) return;
+            const current = images[index];
+            baseWidth = 0;
+            baseHeight = 0;
+            resetZoom();
+            lightboxImage.src = current?.src ?? "";
+            lightboxImage.alt = current?.caption || "Project screenshot";
+            lightboxCaption.textContent = current?.caption ?? "";
+            if (lightboxPrev) lightboxPrev.disabled = images.length <= 1;
+            if (lightboxNext) lightboxNext.disabled = images.length <= 1;
+        }
+
+        lightboxImage?.addEventListener("load", () => {
+            computeBaseSize();
+            resetZoom();
+        });
+
+        zoomInBtn?.addEventListener("click", () => {
+            zoom = Math.min(ZOOM_MAX, +(zoom + ZOOM_STEP).toFixed(2));
+            applyZoom();
+        });
+
+        zoomOutBtn?.addEventListener("click", () => {
+            zoom = Math.max(ZOOM_MIN, +(zoom - ZOOM_STEP).toFixed(2));
+            applyZoom();
+        });
+
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+        let panScrollX = 0;
+        let panScrollY = 0;
+
+        lightboxViewport?.addEventListener("mousedown", (e) => {
+            if (!lightboxViewport.classList.contains("is-zoomed")) return;
+            isPanning = true;
+            lightboxViewport.classList.add("is-panning");
+            panStartX = e.clientX;
+            panStartY = e.clientY;
+            panScrollX = lightboxViewport.scrollLeft;
+            panScrollY = lightboxViewport.scrollTop;
+            e.preventDefault();
+        });
+
+        window.addEventListener("mousemove", (e) => {
+            if (!isPanning || !lightboxViewport) return;
+            lightboxViewport.scrollLeft = panScrollX - (e.clientX - panStartX);
+            lightboxViewport.scrollTop = panScrollY - (e.clientY - panStartY);
+        });
+
+        window.addEventListener("mouseup", () => {
+            isPanning = false;
+            lightboxViewport?.classList.remove("is-panning");
+        });
+
+        function openProject(project: Project) {
+            images = project.images;
+            index = 0;
+
+            if (galleryThumbs) {
+                galleryThumbs.replaceChildren();
+                images.forEach((img, i) => {
+                    const thumb = document.createElement("img");
+                    thumb.src = img.src;
+                    thumb.alt = `thumbnail ${i + 1}`;
+                    thumb.loading = "lazy";
+                    thumb.decoding = "async";
+                    thumb.addEventListener("click", () => {
+                        index = i;
+                        renderImage();
+                    });
+                    galleryThumbs.appendChild(thumb);
+                });
+            }
+            renderImage();
+
+            if (detailTitle) detailTitle.textContent = project.title;
+            if (detailContext) detailContext.textContent = project.context;
+            if (detailStack) {
+                detailStack.replaceChildren();
+                project.stack.forEach((s) => {
+                    const chip = document.createElement("span");
+                    chip.className = "chip";
+                    chip.textContent = s;
+                    detailStack.appendChild(chip);
+                });
+            }
+            if (detailRole) detailRole.textContent = project.role ? `Role: ${project.role}` : "";
+            if (detailSummary) detailSummary.textContent = project.summary;
+            if (detailHighlights) {
+                detailHighlights.replaceChildren();
+                project.highlights.forEach((h) => {
+                    const li = document.createElement("li");
+                    li.textContent = h;
+                    detailHighlights.appendChild(li);
+                });
+            }
+            if (scrollArea) scrollArea.scrollTop = 0;
+            dialog?.showModal();
+        }
+
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        root.querySelectorAll<HTMLButtonElement>(".project-card").forEach((card) => {
+            card.addEventListener("click", () => {
+                const project = projects.find((p) => p.slug === card.dataset.slug);
+                if (project) openProject(project);
+            });
+
+            if (reduceMotion) return;
+            const MAX_TILT = 5;
+            card.addEventListener("mousemove", (e) => {
+                const rect = card.getBoundingClientRect();
+                const px = (e.clientX - rect.left) / rect.width - 0.5;
+                const py = (e.clientY - rect.top) / rect.height - 0.5;
+                card.style.transform = `perspective(700px) rotateX(${(-py * MAX_TILT).toFixed(2)}deg) rotateY(${(px * MAX_TILT).toFixed(2)}deg) translateY(-3px)`;
+            });
+            card.addEventListener("mouseleave", () => {
+                card.style.transform = "";
+            });
+        });
+
+        // Shared by both the carousel's prev/next and the lightbox's — index
+        // cycling is identical either way, and `renderImage()` already
+        // re-renders the lightbox too when it's open (see its own
+        // `if (lightbox?.open) renderLightbox()`), so nothing else is
+        // needed here regardless of which pair of buttons was clicked.
+        function stepIndex(delta) {
+            index = (index + delta + images.length) % images.length;
+            renderImage();
+        }
+
+        prevBtn?.addEventListener("click", () => stepIndex(-1));
+        nextBtn?.addEventListener("click", () => stepIndex(1));
+
+        closeBtn?.addEventListener("click", () => dialog?.close());
+
+        dialog?.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") prevBtn?.click();
+            if (e.key === "ArrowRight") nextBtn?.click();
+        });
+
+        dialog?.addEventListener("click", (e) => {
+            if (e.target === dialog) dialog.close();
+        });
+
+        function openLightbox() {
+            if (!images.length) return;
+            renderLightbox();
+            lightbox?.showModal();
+        }
+
+        zoomBtn?.addEventListener("click", openLightbox);
+        galleryImage?.addEventListener("click", openLightbox);
+
+        lightboxPrev?.addEventListener("click", () => stepIndex(-1));
+        lightboxNext?.addEventListener("click", () => stepIndex(1));
+
+        lightboxClose?.addEventListener("click", () => lightbox?.close());
+
+        lightbox?.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") lightboxPrev?.click();
+            if (e.key === "ArrowRight") lightboxNext?.click();
+        });
+
+        lightbox?.addEventListener("click", (e) => {
+            if (e.target === lightbox) lightbox.close();
+        });
+    });
+</script>

@@ -1,0 +1,38 @@
+---
+---
+
+<div class="menu-bar">
+    <div class="menu-row">
+        <div class="menu-left">
+            <span class="menu-logo" aria-hidden="true"></span>
+            <span class="brand">Diehan Drotschie</span>
+        </div>
+        <div class="menu-right">
+            <button type="button" class="menu-item" id="spotlight-trigger" aria-label="Search">
+                <kbd class="mod-key" data-key="K">⌘K</kbd> Search
+            </button>
+            <span class="clock" id="menu-clock"></span>
+        </div>
+    </div>
+    <div class="hint-row">
+        <span><kbd class="mod-key" data-key="K">⌘K</kbd> Search</span>
+        <span><kbd class="mod-key" data-key="C">⌘C</kbd> Contact</span>
+        <span class="hint-fill" />
+        <span>© 2026 Diehan Drotschie · Built using Astro and CSS</span>
+    </div>
+</div>
+
+<script>
+    function updateClock() {
+        const el = document.getElementById("menu-clock");
+        if (!el) return;
+        const now = new Date();
+        el.textContent = now.toLocaleTimeString([], {
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }
+    updateClock();
+    setInterval(updateClock, 30_000);
+</script>

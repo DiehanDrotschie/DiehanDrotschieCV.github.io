@@ -1,0 +1,52 @@
+---
+import Layout from "../layouts/Layout.astro";
+import "../styles/desktop.css";
+import { apps } from "../data/apps.js";
+import Wallpaper from "../components/desktop/Wallpaper.astro";
+import MenuBar from "../components/desktop/MenuBar.astro";
+import Dock from "../components/desktop/Dock.astro";
+import Spotlight from "../components/desktop/Spotlight.astro";
+import WindowFrame from "../components/desktop/WindowFrame.astro";
+import DesktopScript from "../components/desktop/DesktopScript.astro";
+import AboutApp from "../components/apps/AboutApp.astro";
+import SkillsApp from "../components/apps/SkillsApp.astro";
+import WorkApp from "../components/apps/WorkApp.astro";
+import ExperienceApp from "../components/apps/ExperienceApp.astro";
+import AchievementsApp from "../components/apps/AchievementsApp.astro";
+import ResumeApp from "../components/apps/ResumeApp.astro";
+import ContactApp from "../components/apps/ContactApp.astro";
+import ContactLinksApp from "../components/apps/ContactLinksApp.astro";
+
+const appComponents = {
+    about: AboutApp,
+    skills: SkillsApp,
+    work: WorkApp,
+    experience: ExperienceApp,
+    achievements: AchievementsApp,
+    resume: ResumeApp,
+    contact: ContactApp,
+    "contact-links": ContactLinksApp,
+};
+---
+
+<Layout>
+    <div class="desktop">
+        <Wallpaper />
+        <MenuBar />
+        {
+            apps
+                .map((app) => {
+                    const Content = appComponents[app.id];
+                    return (
+                        <WindowFrame id={app.id} title={app.title}>
+                            <Content />
+                        </WindowFrame>
+                    );
+                })
+        }
+        <Dock />
+        <Spotlight />
+    </div>
+
+    <DesktopScript />
+</Layout>

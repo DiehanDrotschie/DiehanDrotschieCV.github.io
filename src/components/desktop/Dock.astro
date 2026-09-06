@@ -1,0 +1,56 @@
+---
+import { apps } from "../../data/apps.js";
+import { contact } from "../../data/site.js";
+
+const linkGlyphs = {
+    linkedin:
+        '<rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/><path d="M10 21v-8"/><path d="M10 13a4 4 0 0 1 8 0v8"/>',
+    email: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>',
+};
+
+const contactLinks = [
+    { key: "linkedin", label: "LinkedIn", href: contact.linkedin, external: true },
+    { key: "email", label: "Email", href: contact.email ? `mailto:${contact.email}` : "" },
+].filter((link) => link.href);
+---
+
+<div class="dock">
+    {
+        apps.map((app) =>
+            app.links ? (
+                <div class="dock-item dock-item-links">
+                    <button type="button" class="dock-trigger" title={app.title} aria-label={app.title}>
+                        <span class="dock-icon" style={`background:${app.gradient}`} set:html={app.icon} />
+                    </button>
+                    <div class="dock-flyout">
+                        {contactLinks.map((link) => (
+                            <a
+                                class="dock-flyout-item"
+                                href={link.href}
+                                target={link.external ? "_blank" : undefined}
+                                rel={link.external ? "noreferrer" : undefined}
+                            >
+                                <span
+                                    class="dock-flyout-icon"
+                                    set:html={`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${linkGlyphs[link.key]}</svg>`}
+                                />
+                                <span>{link.label}</span>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <button
+                    type="button"
+                    class="dock-item"
+                    data-open={app.id}
+                    title={app.title}
+                    aria-label={app.title}
+                >
+                    <span class="dock-icon" style={`background:${app.gradient}`} set:html={app.icon} />
+                    <span class="dock-label">{app.title}</span>
+                </button>
+            ),
+        )
+    }
+</div>

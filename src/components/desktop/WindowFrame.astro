@@ -1,0 +1,30 @@
+---
+interface Props {
+    id: string;
+    title: string;
+}
+
+const { id, title } = Astro.props;
+---
+
+<div class="window" data-app={id}>
+    <div class="window-titlebar">
+        <div class="window-dots">
+            <button type="button" class="window-dot close" aria-label="Close"></button>
+            <button type="button" class="window-dot minimize" aria-label="Minimize"></button>
+            <button type="button" class="window-dot zoom" aria-label="Maximize"></button>
+        </div>
+        <span class="window-title">{title}</span>
+    </div>
+    <div class="window-body">
+        <slot />
+    </div>
+    <div class="resize-handle resize-n" data-edge="n"></div>
+    <div class="resize-handle resize-s" data-edge="s"></div>
+    <div class="resize-handle resize-e" data-edge="e"></div>
+    <div class="resize-handle resize-w" data-edge="w"></div>
+    <div class="resize-handle resize-ne" data-edge="ne"></div>
+    <div class="resize-handle resize-nw" data-edge="nw"></div>
+    <div class="resize-handle resize-se" data-edge="se"></div>
+    <div class="resize-handle resize-sw" data-edge="sw"></div>
+</div>
